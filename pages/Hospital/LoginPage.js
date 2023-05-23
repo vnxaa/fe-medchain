@@ -17,7 +17,7 @@ const LoginPage = () => {
       const address = await signer.getAddress();
 
       const response = await axios.post(
-        "http://localhost:5000/api/auth/hospital/login",
+        `${process.env.service}/api/auth/hospital/login`,
         {
           walletAddress: address,
           message: message,
@@ -31,7 +31,7 @@ const LoginPage = () => {
       localStorage.setItem("token", token);
 
       // Redirect to the desired page after successful login
-      router.push("/Hospital/HospitalPage"); // Replace "/hospital" with your desired page
+      router.push("/Hospital/Dashboard"); // Replace "/hospital" with your desired page
     } catch (error) {
       // Handle any errors
       console.error(error);

@@ -13,19 +13,37 @@ const Navigation = () => {
   useEffect(() => {
     // Get the token from localStorage
     const token = localStorage.getItem("token");
-    const decodedToken = jwt_decode(token);
-    // Decode the token to obtain the user's role
-    if (decodedToken?.doctor) {
-      setRole("doctor");
-    } else if (decodedToken?.patient) {
-      setRole("patient");
-    } else if (decodedToken?.hospital) {
-      setRole("hospital");
+    if (!token) {
+      handleNavigation("../Common/Permission");
+    } else {
+      const decodedToken = jwt_decode(token);
+      // Decode the token to obtain the user's role
+      if (decodedToken?.doctor) {
+        setRole("doctor");
+      } else if (decodedToken?.patient) {
+        setRole("patient");
+      } else if (decodedToken?.hospital) {
+        setRole("hospital");
+      }
     }
   }, []);
 
   const handleNavigation = (path) => {
     router.push(path);
+  };
+
+  // Function to clear the token from local storage
+  const clearToken = () => {
+    localStorage.removeItem("token");
+  };
+
+  // Example usage:
+  // Call the clearToken function when the user signs out
+  const handleSignOut = () => {
+    // Perform sign out logic here
+
+    // Clear the token from local storage
+    clearToken();
   };
 
   return (
@@ -85,7 +103,7 @@ const Navigation = () => {
                       : ""
                   }`}
                 >
-                  Profile
+                  Hồ sơ
                 </a>
               </li>
               <li>
@@ -97,15 +115,16 @@ const Navigation = () => {
                       : ""
                   }`}
                 >
-                  Settings
+                  Cài đặt
                 </a>
               </li>
               <li>
                 <a
-                  href="#"
-                  className="block px-4 py-2 text-sm text-gray-700 hover:text-red-700 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white"
+                  href="./LoginPage"
+                  className="block px-4 py-2 text-sm text-gray-700 text-red-700 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white"
+                  onClick={handleSignOut}
                 >
-                  Sign out
+                  Thoát
                 </a>
               </li>
             </ul>
