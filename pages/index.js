@@ -17,19 +17,19 @@ export default function MedicalRecordHome() {
         <p className="text-gray-600 leading-loose mb-8">
           Here you can access and manage your medical records securely.
         </p>
-        <Link href="/NFTList" passHref>
+        <Link href="/Doctor/LoginPage" passHref>
           <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-            View Medical Records
+            Doctor
           </button>
         </Link>
-        <Link href="/MedicalRecordForm" passHref>
+        <Link href="/Hospital/LoginPage" passHref>
           <button className="ml-5 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-            Medical Record Form
+            Hospital
           </button>
         </Link>
-        <Link href="/mintNFT" passHref>
+        <Link href="/Patient/LoginPage" passHref>
           <button className="ml-5 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-            Mint NFT Medical Record
+            Patient
           </button>
         </Link>
       </main>
