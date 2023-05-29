@@ -4,7 +4,8 @@ import React, { useEffect, useState } from "react";
 
 const Navigation = () => {
   const router = useRouter();
-  const [role, setRole] = React.useState("");
+  const [role, setRole] = useState("");
+  const [user, userInfo] = useState("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const handleMenuToggle = () => {
@@ -20,10 +21,13 @@ const Navigation = () => {
       // Decode the token to obtain the user's role
       if (decodedToken?.doctor) {
         setRole("doctor");
+        userInfo(decodedToken?.doctor);
       } else if (decodedToken?.patient) {
         setRole("patient");
+        userInfo(decodedToken?.patient);
       } else if (decodedToken?.hospital) {
         setRole("hospital");
+        userInfo(decodedToken?.hospital);
       }
     }
   }, []);
@@ -47,7 +51,10 @@ const Navigation = () => {
   };
 
   return (
-    <nav className="bg-white border-gray-200 dark:bg-gray-900">
+    <nav
+      className="bg-white border-gray-200 dark:bg-gray-900 "
+      style={{ marginBottom: "50px" }}
+    >
       <div className="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
         <a href="https://flowbite.com/" className="flex items-center">
           <img
@@ -75,22 +82,28 @@ const Navigation = () => {
             <span className="sr-only">Open user menu</span>
             <img
               className="w-8 h-8 rounded-full"
-              src="/docs/images/people/profile-picture-3.jpg"
+              src={user.picture}
               alt="user photo"
             />
           </button>
           {/* Dropdown menu */}
           <div
-            className="z-50 hidden my-4 text-base list-none bg-white absolute divide-y divide-gray-100 rounded-lg shadow dark:bg-gray-700 dark:divide-gray-600"
+            className="z-50  hidden my-4 text-base list-none bg-white absolute divide-y divide-gray-100 rounded-lg shadow dark:bg-gray-700 dark:divide-gray-600"
             style={{ marginTop: "250px" }}
             id="user-dropdown"
           >
             <div className="px-4 py-3">
               <span className="block text-sm text-gray-900 dark:text-white">
-                Bonnie Green
+                {user.name}
               </span>
               <span className="block text-sm  text-gray-500 truncate dark:text-gray-400">
-                name@flowbite.com
+                {user.walletAddress &&
+                  `${user.walletAddress.substring(
+                    0,
+                    5
+                  )}...${user.walletAddress.substring(
+                    user.walletAddress.length - 5
+                  )}`}
               </span>
             </div>
             <ul className="py-2" aria-labelledby="user-menu-button">
@@ -200,7 +213,9 @@ const Navigation = () => {
                   <a
                     href="./Doctor"
                     className={`block py-2 pl-3 pr-4 ${
-                      router.pathname === "/Hospital/Doctor"
+                      router.pathname === "/Hospital/Doctor" ||
+                      router.pathname === "/Hospital/DoctorAccount" ||
+                      router.pathname === "/Hospital/DoctorList"
                         ? "text-white bg-blue-700 rounded md:bg-transparent md:text-blue-700 md:p-0 md:dark:text-blue-500"
                         : "text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 dark:text-white md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent dark:border-gray-700"
                     }`}

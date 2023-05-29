@@ -2,7 +2,7 @@ import jwt_decode from "jwt-decode";
 import { useRouter } from "next/router";
 import React, { useEffect } from "react";
 import Navigation from "../Common/Navigation";
-const Dashboard = () => {
+const DoctorList = () => {
   const router = useRouter();
   useEffect(() => {
     // Get the token from localStorage
@@ -28,7 +28,7 @@ const Dashboard = () => {
       }
     } else {
       // Token not found, redirect to login page or show an error message
-      // router.push("/Hospital/LoginPage");
+      router.push("/Hospital/LoginPage");
 
       console.log("Token not found. Please log in.");
     }
@@ -37,10 +37,10 @@ const Dashboard = () => {
   return (
     <div>
       <Navigation />
-      <h1>Hospital Page</h1>
+      <h1>DoctorList page</h1>
       {/* Add your page content here */}
     </div>
   );
 };
 
-export default Dashboard;
+export default DoctorList;
