@@ -109,7 +109,15 @@ const Navigation = () => {
             <ul className="py-2" aria-labelledby="user-menu-button">
               <li>
                 <a
-                  href="./Profile"
+                  href={
+                    role === "doctor"
+                      ? "/Doctor/Profile"
+                      : role === "Profile"
+                      ? "/Hospital/Settings"
+                      : role === "patient"
+                      ? "/Patient/Profile"
+                      : ""
+                  }
                   className={`block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white ${
                     router.pathname.endsWith("/Profile")
                       ? "md:text-blue-700"
@@ -121,7 +129,15 @@ const Navigation = () => {
               </li>
               <li>
                 <a
-                  href="./Settings"
+                  href={
+                    role === "doctor"
+                      ? "/Doctor/Settings"
+                      : role === "hospital"
+                      ? "/Hospital/Settings"
+                      : role === "patient"
+                      ? "/Patient/Settings"
+                      : ""
+                  }
                   className={`block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white ${
                     router.pathname.endsWith("/Settings")
                       ? "md:text-blue-700"
@@ -251,7 +267,7 @@ const Navigation = () => {
               <>
                 <li>
                   <a
-                    href="./Dashboard"
+                    href="/Doctor/Dashboard"
                     className={`block py-2 pl-3 pr-4 ${
                       router.pathname === "/Doctor/Dashboard"
                         ? "text-white bg-blue-700 rounded md:bg-transparent md:text-blue-700 md:p-0 md:dark:text-blue-500"
@@ -268,7 +284,7 @@ const Navigation = () => {
                 </li>
                 <li>
                   <a
-                    href="./MedicalRecord"
+                    href="/Doctor/MedicalRecord"
                     className={`block py-2 pl-3 pr-4 ${
                       router.pathname === "/Doctor/MedicalRecord"
                         ? "text-white bg-blue-700 rounded md:bg-transparent md:text-blue-700 md:p-0 md:dark:text-blue-500"
@@ -285,7 +301,7 @@ const Navigation = () => {
                 </li>
                 <li>
                   <a
-                    href="./Patient"
+                    href="/Doctor/Patient"
                     className={`block py-2 pl-3 pr-4 ${
                       router.pathname === "/Doctor/Patient"
                         ? "text-white bg-blue-700 rounded md:bg-transparent md:text-blue-700 md:p-0 md:dark:text-blue-500"
