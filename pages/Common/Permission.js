@@ -18,7 +18,7 @@ const Permission = () => {
           Access Denied
         </h1>
         <p className="mt-6 text-base leading-7 text-gray-600">
-          Sorry, you don't have permission to visit this site.
+          Sorry, you don&apos;t have permission to visit this site.
         </p>
         <div className="mt-10 flex items-center justify-center gap-x-6">
           <a

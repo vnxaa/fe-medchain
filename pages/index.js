@@ -94,11 +94,11 @@ export default function MedicalRecordHome() {
           style={{ marginTop: "100px" }}
         >
           <h1 className="mb-4 text-4xl font-extrabold tracking-tight leading-none text-gray-900 md:text-5xl lg:text-6xl dark:text-white">
-            <span class="text-transparent bg-clip-text bg-gradient-to-r to-emerald-600 from-sky-400">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r to-emerald-600 from-sky-400">
               Medchain
             </span>{" "}
             - Health{" "}
-            <span class="underline underline-offset-3 decoration-8 decoration-blue-400 dark:decoration-blue-600">
+            <span className="underline underline-offset-3 decoration-8 decoration-blue-400 dark:decoration-blue-600">
               Blockchain
             </span>{" "}
             Solution
@@ -218,7 +218,7 @@ export default function MedicalRecordHome() {
               <div className="mt-3 sm:pr-8">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                   Store Data In{" "}
-                  <span class="underline underline-offset-1 decoration-4 decoration-blue-400 dark:decoration-blue-600">
+                  <span className="underline underline-offset-1 decoration-4 decoration-blue-400 dark:decoration-blue-600">
                     Blockchain
                   </span>
                 </h3>
@@ -391,11 +391,7 @@ export default function MedicalRecordHome() {
           </div>
           <hr className="my-6 border-gray-200 sm:mx-auto dark:border-gray-700 lg:my-8" />
           <span className="block text-sm text-gray-500 sm:text-center dark:text-gray-400">
-            © 2023{"{"}" "{"}"}
-            <a href="https://flowbite.com/" className="hover:underline">
-              Medchain
-            </a>
-            . All Rights Reserved.
+            Medchain
           </span>
         </div>
       </footer>

@@ -1,5 +1,6 @@
 import axios from "axios";
 import jwt_decode from "jwt-decode";
+import Link from "next/link";
 import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
 import Navigation from "../../Common/Navigation";
@@ -72,12 +73,12 @@ const PatientProfile = () => {
             <li className="inline-flex items-center"></li>
             <li>
               <div className="flex items-center">
-                <a
+                <Link
                   href="/Doctor/Patient"
                   className="ml-1 text-sm font-medium text-gray-700 hover:text-blue-600 md:ml-2 dark:text-gray-400 dark:hover:text-white"
                 >
                   Danh sách bệnh nhân
-                </a>
+                </Link>
               </div>
             </li>
             <li aria-current="page">
@@ -119,14 +120,14 @@ const PatientProfile = () => {
                     <p className="text-xs text-gray-400">
                       {patientInfo.walletAddress}
                     </p>
-                    <a
+                    <button
                       href={`/Doctor/MedicalRecord/${id}`}
                       type="button"
                       style={{ marginTop: "25px" }}
-                      class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
+                      className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
                     >
                       Tạo bệnh án
-                    </a>
+                    </button>
                   </div>
                 </div>
               </div>

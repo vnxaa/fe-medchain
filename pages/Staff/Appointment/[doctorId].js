@@ -3,6 +3,7 @@ import FullCalendar from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import axios from "axios";
 import jwt_decode from "jwt-decode";
+import Link from "next/link";
 import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
 import Navigation from "../../Common/Navigation";
@@ -161,12 +162,12 @@ const AppointmentRequests = () => {
             <li className="inline-flex items-center"></li>
             <li>
               <div className="flex items-center">
-                <a
+                <Link
                   href="/Staff/Doctor"
                   className="ml-1 text-sm font-medium text-gray-700 hover:text-blue-600 md:ml-2 dark:text-gray-400 dark:hover:text-white"
                 >
                   Danh sách bác sĩ
-                </a>
+                </Link>
               </div>
             </li>
             <li aria-current="page">

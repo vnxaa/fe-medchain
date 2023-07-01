@@ -107,7 +107,7 @@ const Appointment = () => {
 
       console.log("Token not found. Please log in.");
     }
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     if (doctorId) {
@@ -123,7 +123,7 @@ const Appointment = () => {
       // Cleanup the interval when the component unmounts or when the doctorId changes
       return () => clearInterval(intervalId);
     }
-  }, [doctorId]);
+  }, [doctorId, getAppointmentsByDoctorId]);
 
   return (
     <div>

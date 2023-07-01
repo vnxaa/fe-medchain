@@ -128,6 +128,7 @@ const MedicalRecord = () => {
                         <a
                           href={`https://sepolia.etherscan.io/tx/${record.transactionHash}`}
                           target="_blank"
+                          rel="noreferrer noopener"
                           className=" hover:text-blue-500"
                         >
                           {record.transactionHash}

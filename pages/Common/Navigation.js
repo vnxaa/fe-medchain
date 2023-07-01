@@ -1,7 +1,7 @@
 import jwt_decode from "jwt-decode";
+import Link from "next/link";
 import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
-
 const Navigation = () => {
   const router = useRouter();
   const [role, setRole] = useState("");
@@ -56,12 +56,8 @@ const Navigation = () => {
       style={{ marginBottom: "50px" }}
     >
       <div className="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
-        <a href="https://flowbite.com/" className="flex items-center">
-          <img
-            src="https://flowbite.com/docs/images/logo.svg"
-            className="h-8 mr-3"
-            alt="Flowbite Logo"
-          />
+        <a className="flex items-center">
+          <div className="h-8 mr-3"></div>
           <span className="self-center text-2xl font-semibold whitespace-nowrap dark:text-white">
             Medchain
           </span>
@@ -266,7 +262,7 @@ const Navigation = () => {
             {role === "doctor" && (
               <>
                 <li>
-                  <a
+                  <Link
                     href="/Doctor/Dashboard"
                     className={`block py-2 pl-3 pr-4 ${
                       router.pathname === "/Doctor/Dashboard"
@@ -280,10 +276,10 @@ const Navigation = () => {
                     }
                   >
                     Dashboard
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a
+                  <Link
                     href="/Doctor/MedicalRecord"
                     className={`block py-2 pl-3 pr-4 ${
                       router.pathname === "/Doctor/MedicalRecord"
@@ -297,10 +293,10 @@ const Navigation = () => {
                     }
                   >
                     Bệnh án
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a
+                  <Link
                     href="/Doctor/Patient"
                     className={`block py-2 pl-3 pr-4 ${
                       router.pathname === "/Doctor/Patient"
@@ -312,10 +308,10 @@ const Navigation = () => {
                     }
                   >
                     Bệnh nhân
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a
+                  <Link
                     href="/Doctor/Appointment"
                     className={`block py-2 pl-3 pr-4 ${
                       router.pathname === "/Doctor/Appointment"
@@ -329,7 +325,7 @@ const Navigation = () => {
                     }
                   >
                     Lịch khám
-                  </a>
+                  </Link>
                 </li>
               </>
             )}

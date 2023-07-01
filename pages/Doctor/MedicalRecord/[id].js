@@ -1,5 +1,6 @@
 import axios from "axios";
 import jwt_decode from "jwt-decode";
+import Link from "next/link";
 import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
 import Navigation from "../../Common/Navigation";
@@ -259,12 +260,12 @@ const MedicalRecord = () => {
             <li className="inline-flex items-center"></li>
             <li>
               <div className="flex items-center">
-                <a
+                <Link
                   href="/Doctor/Patient"
                   className="ml-1 text-sm font-medium text-gray-700 hover:text-blue-600 md:ml-2 dark:text-gray-400 dark:hover:text-white"
                 >
                   Danh sách bệnh nhân
-                </a>
+                </Link>
               </div>
             </li>
             <li aria-current="page">
@@ -282,12 +283,12 @@ const MedicalRecord = () => {
                     clipRule="evenodd"
                   />
                 </svg>
-                <a
+                <Link
                   href={`/Doctor/PatientProfile/${id}`}
                   className="ml-1 text-sm font-medium text-gray-700 hover:text-blue-600 md:ml-2 dark:text-gray-400 dark:hover:text-white"
                 >
                   {patientInfo.name}
-                </a>
+                </Link>
               </div>
             </li>
             <li aria-current="page">
