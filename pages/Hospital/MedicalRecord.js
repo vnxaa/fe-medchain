@@ -5,10 +5,10 @@ import React, { useEffect, useState } from "react";
 import Navigation from "../Common/Navigation";
 const MedicalRecord = () => {
   const router = useRouter();
-  const [patientInfo, setPatientInfo] = useState({});
-  const [doctorInfo, setDoctorInfo] = useState({});
+  const [patientInfo, setPatientInfo] = useState([]);
+  const [doctorInfo, setDoctorInfo] = useState([]);
   const [medicalRecords, setMedicalRecords] = useState([]);
-
+  const [statusFilter, setStatusFilter] = useState("");
   const fetchPatientInfo = async (id) => {
     try {
       const response = await axios.get(
@@ -46,7 +46,17 @@ const MedicalRecord = () => {
       const response = await axios.get(
         `${process.env.service}/api/medicalRecord`
       );
-      setMedicalRecords(response.data);
+      const allRecords = response.data;
+      if (statusFilter.toLowerCase() == "all") {
+        setMedicalRecords(allRecords);
+      } else {
+        const filteredRecords = allRecords.filter((record) => {
+          const status = record.status.toLowerCase();
+          return status.includes(statusFilter.toLowerCase());
+        });
+
+        setMedicalRecords(filteredRecords);
+      }
     } catch (error) {
       console.error("Failed to fetch medical records:", error);
     }
@@ -54,6 +64,13 @@ const MedicalRecord = () => {
   // console.log(medicalRecords);
   // console.log(patientInfo);
   // console.log(doctorInfo);
+
+  const filterRecords = (searchTerm) => {
+    setStatusFilter(searchTerm);
+  };
+  useEffect(() => {
+    fetchMedicalRecords();
+  }, [statusFilter]);
   useEffect(() => {
     // Get the token from localStorage
     const token = localStorage.getItem("token");
@@ -90,8 +107,13 @@ const MedicalRecord = () => {
       const patientIds = medicalRecords.map((record) => record.patientId);
       const doctorIds = medicalRecords.map((record) => record.doctorId);
 
-      fetchPatientInfo(patientIds);
-      fetchDoctorInfo(doctorIds);
+      patientIds.forEach((patientId) => {
+        fetchPatientInfo(patientId);
+      });
+
+      doctorIds.forEach((doctorIds) => {
+        fetchDoctorInfo(doctorIds);
+      });
     }
   }, [medicalRecords]);
   const calculateAge = (birthday) => {
@@ -107,7 +129,7 @@ const MedicalRecord = () => {
         <div className="relative overflow-x-auto shadow-md sm:rounded-lg">
           <div className="flex items-center justify-between py-4 bg-white dark:bg-gray-800">
             <div></div>
-            <label htmlFor="table-search" className="sr-only">
+            {/* <label htmlFor="table-search" className="sr-only">
               Search
             </label>
             <div className="relative">
@@ -131,7 +153,20 @@ const MedicalRecord = () => {
                 id="table-search-users"
                 className="block p-2 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg w-80 bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                 placeholder="Tìm bệnh án"
+                onChange={(e) => filterRecords(e.target.value)}
               />
+            </div> */}
+            <div className="relative">
+              <select
+                className="block p-2 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg w-40 bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                // value={statusFilter}
+                onChange={(e) => filterRecords(e.target.value)}
+              >
+                <option value="all">All</option>
+                <option value="minted">Minted</option>
+                <option value="draft">Draft</option>
+                <option value="reject">Reject</option>
+              </select>
             </div>
           </div>
 
