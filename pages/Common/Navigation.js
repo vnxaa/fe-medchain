@@ -1,4 +1,5 @@
 import jwt_decode from "jwt-decode";
+import Link from "next/link";
 import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
 const Navigation = () => {
@@ -261,7 +262,7 @@ const Navigation = () => {
             {role === "doctor" && (
               <>
                 <li>
-                  <a
+                  <Link
                     href="/Doctor/Dashboard"
                     className={`block py-2 pl-3 pr-4 ${
                       router.pathname === "/Doctor/Dashboard"
@@ -275,10 +276,10 @@ const Navigation = () => {
                     }
                   >
                     Dashboard
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a
+                  <Link
                     href="/Doctor/MedicalRecord"
                     className={`block py-2 pl-3 pr-4 ${
                       router.pathname === "/Doctor/MedicalRecord"
@@ -292,10 +293,10 @@ const Navigation = () => {
                     }
                   >
                     Bệnh án
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a
+                  <Link
                     href="/Doctor/Patient"
                     className={`block py-2 pl-3 pr-4 ${
                       router.pathname === "/Doctor/Patient"
@@ -307,10 +308,10 @@ const Navigation = () => {
                     }
                   >
                     Bệnh nhân
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a
+                  <Link
                     href="/Doctor/Appointment"
                     className={`block py-2 pl-3 pr-4 ${
                       router.pathname === "/Doctor/Appointment"
@@ -324,7 +325,7 @@ const Navigation = () => {
                     }
                   >
                     Lịch khám
-                  </a>
+                  </Link>
                 </li>
               </>
             )}
