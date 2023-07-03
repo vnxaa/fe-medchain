@@ -44,7 +44,7 @@ const Settings = () => {
 
       console.log("Token not found. Please log in.");
     }
-  }, []);
+  }, [router]);
   const handleNameChange = (e) => {
     setName(e.target.value);
   };

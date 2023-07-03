@@ -5,7 +5,7 @@ import axios from "axios";
 import jwt_decode from "jwt-decode";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import Navigation from "../../Common/Navigation";
 const AppointmentRequests = () => {
   const router = useRouter();
@@ -45,7 +45,7 @@ const AppointmentRequests = () => {
     confirmed: "#1a56db",
     cancelled: "#c81e1e",
   };
-  const getAppointmentsByDoctorId = async (doctorId) => {
+  const getAppointmentsByDoctorId = useCallback(async (doctorId) => {
     try {
       const response = await axios.get(
         `${process.env.service}/api/appointment/doctor/${doctorId}`
@@ -70,7 +70,7 @@ const AppointmentRequests = () => {
     } catch (error) {
       console.error("Failed to fetch appointments:", error);
     }
-  };
+  }, []);
   async function updateAppointmentStatus(appointmentId, newStatus) {
     try {
       const response = await axios.put(
@@ -115,7 +115,7 @@ const AppointmentRequests = () => {
 
       console.log("Token not found. Please log in.");
     }
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     if (doctorId) {
@@ -131,7 +131,7 @@ const AppointmentRequests = () => {
       // Cleanup the interval when the component unmounts or when the doctorId changes
       return () => clearInterval(intervalId);
     }
-  }, [doctorId]);
+  }, [doctorId, getAppointmentsByDoctorId]);
   const handleAppoinment = async (eventInfo) => {
     setSelectedEvent(eventInfo.event);
 

@@ -41,7 +41,7 @@ const Profile = () => {
 
       console.log("Token not found. Please log in.");
     }
-  }, []);
+  }, [router]);
 
   const fetchDoctorInfo = async (doctorId) => {
     try {

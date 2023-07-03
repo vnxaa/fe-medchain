@@ -4,7 +4,7 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import axios from "axios";
 import jwt_decode from "jwt-decode";
 import { useRouter } from "next/router";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import Navigation from "../Common/Navigation";
 const Appointment = () => {
   const router = useRouter();
@@ -52,7 +52,7 @@ const Appointment = () => {
     confirmed: "#1a56db",
     cancelled: "#c81e1e",
   };
-  const getAppointmentsByDoctorId = async (doctorId) => {
+  const getAppointmentsByDoctorId = useCallback(async (doctorId) => {
     try {
       const response = await axios.get(
         `${process.env.service}/api/appointment/doctor/${doctorId}`
@@ -76,7 +76,7 @@ const Appointment = () => {
     } catch (error) {
       console.error("Failed to fetch appointments:", error);
     }
-  };
+  }, []);
 
   useEffect(() => {
     // Get the token from localStorage

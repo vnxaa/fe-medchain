@@ -32,7 +32,7 @@ const Doctor = () => {
 
       console.log("Token not found. Please log in.");
     }
-  }, []);
+  }, [router]);
 
   return (
     <div>

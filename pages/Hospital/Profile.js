@@ -42,7 +42,7 @@ const Profile = () => {
 
       console.log("Token not found. Please log in.");
     }
-  }, []);
+  }, [router]);
   const fetchHospitalInfo = async (hospitalId) => {
     try {
       const response = await axios.get(

@@ -43,7 +43,7 @@ const Profile = () => {
 
       console.log("Token not found. Please log in.");
     }
-  }, []);
+  }, [router]);
 
   const fetchPatientInfo = async (patientId) => {
     try {

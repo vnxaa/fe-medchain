@@ -1,7 +1,7 @@
 import axios from "axios";
 import jwt_decode from "jwt-decode";
 import { useRouter } from "next/router";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import Navigation from "../Common/Navigation";
 const MedicalRecord = () => {
   const router = useRouter();
@@ -9,45 +9,14 @@ const MedicalRecord = () => {
   const [doctorInfo, setDoctorInfo] = useState([]);
   const [medicalRecords, setMedicalRecords] = useState([]);
   const [statusFilter, setStatusFilter] = useState("");
-  const fetchPatientInfo = async (id) => {
-    try {
-      const response = await axios.get(
-        `${process.env.service}/api/patient/${id}`
-      );
-      const patientData = response.data;
-      setPatientInfo((prevInfo) => ({
-        ...prevInfo,
-        [id]: patientData,
-      }));
-    } catch (error) {
-      console.error(`Failed to fetch patient information for ID ${id}:`, error);
-    }
-  };
 
-  const fetchDoctorInfo = async (doctorId) => {
-    try {
-      const response = await axios.get(
-        `${process.env.service}/api/doctor/${doctorId}`
-      );
-      const doctorData = response.data;
-      setDoctorInfo((prevInfo) => ({
-        ...prevInfo,
-        [doctorId]: doctorData,
-      }));
-    } catch (error) {
-      console.error(
-        `Failed to fetch doctor information for ID ${doctorId}:`,
-        error
-      );
-    }
-  };
-  const fetchMedicalRecords = async () => {
+  const fetchMedicalRecords = useCallback(async () => {
     try {
       const response = await axios.get(
         `${process.env.service}/api/medicalRecord`
       );
       const allRecords = response.data;
-      if (statusFilter.toLowerCase() == "all") {
+      if (statusFilter.toLowerCase() === "all") {
         setMedicalRecords(allRecords);
       } else {
         const filteredRecords = allRecords.filter((record) => {
@@ -60,7 +29,7 @@ const MedicalRecord = () => {
     } catch (error) {
       console.error("Failed to fetch medical records:", error);
     }
-  };
+  }, [statusFilter]);
   // console.log(medicalRecords);
   // console.log(patientInfo);
   // console.log(doctorInfo);
@@ -70,7 +39,7 @@ const MedicalRecord = () => {
   };
   useEffect(() => {
     fetchMedicalRecords();
-  }, [statusFilter]);
+  }, [statusFilter, fetchMedicalRecords]);
   useEffect(() => {
     // Get the token from localStorage
     const token = localStorage.getItem("token");
@@ -100,12 +69,48 @@ const MedicalRecord = () => {
       console.log("Token not found. Please log in.");
     }
     fetchMedicalRecords();
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     if (medicalRecords.length > 0) {
       const patientIds = medicalRecords.map((record) => record.patientId);
       const doctorIds = medicalRecords.map((record) => record.doctorId);
+
+      const fetchPatientInfo = async (id) => {
+        try {
+          const response = await axios.get(
+            `${process.env.service}/api/patient/${id}`
+          );
+          const patientData = response.data;
+          setPatientInfo((prevInfo) => ({
+            ...prevInfo,
+            [id]: patientData,
+          }));
+        } catch (error) {
+          console.error(
+            `Failed to fetch patient information for ID ${id}:`,
+            error
+          );
+        }
+      };
+
+      const fetchDoctorInfo = async (doctorId) => {
+        try {
+          const response = await axios.get(
+            `${process.env.service}/api/doctor/${doctorId}`
+          );
+          const doctorData = response.data;
+          setDoctorInfo((prevInfo) => ({
+            ...prevInfo,
+            [doctorId]: doctorData,
+          }));
+        } catch (error) {
+          console.error(
+            `Failed to fetch doctor information for ID ${doctorId}:`,
+            error
+          );
+        }
+      };
 
       patientIds.forEach((patientId) => {
         fetchPatientInfo(patientId);

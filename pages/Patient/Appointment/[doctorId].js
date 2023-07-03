@@ -71,6 +71,28 @@ const Appointment = () => {
   const handleCancelAppointment = () => {
     setShowConfirmation(false);
   };
+  const getAppointmentsByDoctorId = (doctorId) => {
+    // Make the GET request using Axios
+    axios
+      .get(`${process.env.service}/api/appointment/doctor/${doctorId}`)
+      .then((response) => {
+        // Handle the response data
+        const appointments = response.data.appointments;
+        setAppointments(appointments);
+        setEvents(
+          appointments.map((appointment) => ({
+            title: appointment.status,
+            start: appointment.startTime,
+            end: appointment.endTime,
+            color: statusColors[appointment.status],
+          }))
+        );
+      })
+      .catch((error) => {
+        // Handle any errors
+        console.error(error);
+      });
+  };
   useEffect(() => {
     // Get the token from localStorage
     const token = localStorage.getItem("token");
@@ -103,7 +125,7 @@ const Appointment = () => {
     if (patientId) {
       fetchPatientInfo(patientId);
     }
-  }, [patientId]);
+  }, [router, patientId]);
   useEffect(() => {
     if (doctorId) {
       // Initial fetch of appointments
@@ -118,30 +140,7 @@ const Appointment = () => {
       // Cleanup the interval when the component unmounts or when the doctorId changes
       return () => clearInterval(intervalId);
     }
-  }, [doctorId]);
-
-  const getAppointmentsByDoctorId = (doctorId) => {
-    // Make the GET request using Axios
-    axios
-      .get(`${process.env.service}/api/appointment/doctor/${doctorId}`)
-      .then((response) => {
-        // Handle the response data
-        const appointments = response.data.appointments;
-        setAppointments(appointments);
-        setEvents(
-          appointments.map((appointment) => ({
-            title: appointment.status,
-            start: appointment.startTime,
-            end: appointment.endTime,
-            color: statusColors[appointment.status],
-          }))
-        );
-      })
-      .catch((error) => {
-        // Handle any errors
-        console.error(error);
-      });
-  };
+  }, [doctorId, getAppointmentsByDoctorId]);
 
   const statusColors = {
     pending: "#e3a008",

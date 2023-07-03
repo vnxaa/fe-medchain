@@ -37,7 +37,7 @@ const AppointmentRequests = () => {
       console.log("Token not found. Please log in.");
     }
     fetchDoctors();
-  }, []);
+  }, [router]);
 
   const fetchDoctors = async () => {
     try {

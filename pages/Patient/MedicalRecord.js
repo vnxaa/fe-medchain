@@ -49,7 +49,7 @@ const MedicalRecord = () => {
     }
 
     // fetchNFTs(address);
-  }, []);
+  }, [router]);
 
   return (
     <div>

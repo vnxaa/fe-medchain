@@ -70,7 +70,7 @@ const Doctor = () => {
     if (tokenId && address) {
       fetchNFTByTokenId(address, tokenId);
     }
-  }, [tokenId, router]);
+  }, [tokenId, router, address]);
 
   return (
     <div>

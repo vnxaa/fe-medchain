@@ -42,7 +42,7 @@ const DoctorAccount = () => {
     }
 
     fetchDoctors();
-  }, []);
+  }, [router]);
 
   const fetchDoctors = async () => {
     try {
