@@ -22,10 +22,10 @@ const Profile = () => {
         console.log(decoded);
 
         // Check if the user is a doctor
-        if (decoded.doctor) {
+        if (decoded?.user?.role === "doctor") {
           // User is a doctor, allow access to the doctor page
           console.log("Access granted to doctor page");
-          const doctorId = jwt_decode(token).doctor._id;
+          const doctorId = jwt_decode(token)?.user?._id;
           fetchDoctorInfo(doctorId);
         } else {
           // User is not a doctor, redirect to another page or show an error message
@@ -94,17 +94,22 @@ const Profile = () => {
               <div className="px-4 py-5 bg-gray-50 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                 <dt className="text-sm font-medium text-gray-500">Giới tính</dt>
                 <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                  {doctorInfo.gender &&
+                  {(doctorInfo.gender &&
                     `${
                       doctorInfo.gender.charAt(0).toUpperCase() +
                       doctorInfo.gender.slice(1)
-                    }`}
+                    }`) ||
+                    "Chưa cập nhật"}
                 </dd>
               </div>
               <div className="px-4 py-5 bg-white sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                 <dt className="text-sm font-medium text-gray-500">Ngày Sinh</dt>
                 <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                  {new Date(doctorInfo.birthday).toLocaleDateString("en-GB")}
+                  {(doctorInfo.birthday &&
+                    new Date(doctorInfo.birthday).toLocaleDateString(
+                      "en-GB"
+                    )) ||
+                    "Chưa cập nhật"}
                 </dd>
               </div>
               <div className="px-4 py-5 bg-gray-50 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
@@ -112,13 +117,15 @@ const Profile = () => {
                   Số điện thoại
                 </dt>
                 <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                  {doctorInfo.contactNumber}
+                  {(doctorInfo.contactNumber && doctorInfo.contactNumber) ||
+                    "Chưa cập nhật"}
                 </dd>
               </div>
               <div className="px-4 py-5 bg-white sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                 <dt className="text-sm font-medium text-gray-500">Địa chỉ</dt>
                 <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                  {doctorInfo.address}
+                  {(doctorInfo.address && doctorInfo.address) ||
+                    "Chưa cập nhật"}
                 </dd>
               </div>
             </dl>

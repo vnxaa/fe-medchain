@@ -2,7 +2,7 @@ import jwt_decode from "jwt-decode";
 import { useRouter } from "next/router";
 import React, { useEffect } from "react";
 import Navigation from "../Common/Navigation";
-const Doctor = () => {
+const Staff = () => {
   const router = useRouter();
   useEffect(() => {
     // Get the token from localStorage
@@ -28,11 +28,11 @@ const Doctor = () => {
       }
     } else {
       // Token not found, redirect to login page or show an error message
-      router.push("/Hospital/LoginPage");
+      // router.push("/Hospital/LoginPage");
 
       console.log("Token not found. Please log in.");
     }
-  }, [router]);
+  }, []);
 
   return (
     <div>
@@ -58,17 +58,16 @@ const Doctor = () => {
                   </div>
                   <div className="flex-grow">
                     <h2 className="text-gray-900 text-lg title-font font-medium mb-3">
-                      Cấp quyền tài khoản bác sĩ
+                      Quản lý tài khoản nhân viên
                     </h2>
                     <p className="leading-relaxed text-base">
-                      Cấp quyền cho phép tài khoản bác sĩ đăng nhập vào hệ
-                      thống.
+                      Cho phép tài khoản nhân viên đăng nhập vào hệ thống.
                     </p>
                     <a
-                      href="./DoctorAccountList"
+                      href="./StaffAccountList"
                       className="mt-3 text-indigo-500 inline-flex items-center"
                     >
-                      Cấp quyền
+                      Quản lý
                       <svg
                         fill="none"
                         stroke="currentColor"
@@ -102,10 +101,10 @@ const Doctor = () => {
                   </div>
                   <div className="flex-grow">
                     <h2 className="text-gray-900 text-lg title-font font-medium mb-3">
-                      Tra cứu thông tin bác sĩ
+                      Tra cứu thông tin nhân viên
                     </h2>
                     <p className="leading-relaxed text-base">
-                      Tra cứu thông tin cá nhân của bác sĩ trong hệ thống.
+                      Tra cứu thông tin cá nhân của nhân viên trong hệ thống.
                     </p>
                     <a
                       href="./DoctorList"
@@ -135,4 +134,4 @@ const Doctor = () => {
   );
 };
 
-export default Doctor;
+export default Staff;

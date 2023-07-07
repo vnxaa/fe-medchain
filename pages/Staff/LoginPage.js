@@ -6,7 +6,8 @@ const LoginPage = () => {
   const router = useRouter();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState(null);
   const handleUsernameChange = (event) => {
     setUsername(event.target.value);
   };
@@ -14,7 +15,8 @@ const LoginPage = () => {
   const handlePasswordChange = (event) => {
     setPassword(event.target.value);
   };
-  const handleLogin = async () => {
+  const handleLogin = async (event) => {
+    event.preventDefault();
     try {
       const response = await axios.post(
         `${process.env.service}/api/auth/login`,
@@ -30,11 +32,14 @@ const LoginPage = () => {
       // console.log(token);
       // Store the token in localStorage
       localStorage.setItem("token", token);
-
+      setSuccess(true);
+      setError(null);
       // Redirect to the desired page after successful login
       router.push("/Staff/Doctor");
     } catch (error) {
+      setError(error.response.data);
       // Handle any errors
+      setSuccess(false);
       console.error(error);
     }
   };
@@ -59,7 +64,7 @@ const LoginPage = () => {
               <h1 className="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
                 Đăng nhập vào tài khoản nhân viên
               </h1>
-              <form className="space-y-4 md:space-y-6" action="#">
+              <form className="space-y-4 md:space-y-6" onSubmit={handleLogin}>
                 <div>
                   <label
                     htmlFor="username"
@@ -96,7 +101,7 @@ const LoginPage = () => {
                     required
                   />
                 </div>
-                <div className="flex items-center justify-between">
+                {/* <div className="flex items-center justify-between">
                   <div className="flex items-start">
                     <div className="flex items-center h-5">
                       <input
@@ -120,16 +125,39 @@ const LoginPage = () => {
                     href="#"
                     className="text-sm font-medium text-primary-600 hover:underline dark:text-primary-500"
                   >
-                    Forgot password?
+                    Quên mật khẩu
                   </a>
-                </div>
+                </div> */}
                 <button
-                  type="button"
-                  onClick={handleLogin}
+                  type="submit"
+                  // onClick={handleLogin}
                   className="text-white bg-gradient-to-br from-purple-600 to-blue-500 hover:bg-gradient-to-bl focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center mr-2 mb-2"
                 >
                   Đăng nhập
                 </button>
+                {error && (
+                  <>
+                    <div
+                      className="flex items-center p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400"
+                      role="alert"
+                    >
+                      <svg
+                        className="flex-shrink-0 inline w-4 h-4 mr-3"
+                        aria-hidden="true"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z" />
+                      </svg>
+                      <span className="sr-only">Info</span>
+                      <div>
+                        <span className="font-medium">Lỗi</span> Tài khoản hoặc
+                        mật khẩu không chính xác
+                      </div>
+                    </div>
+                  </>
+                )}
               </form>
             </div>
           </div>

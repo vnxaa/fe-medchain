@@ -18,6 +18,16 @@ const Appointment = () => {
   const [events, setEvents] = useState([]);
   const [patientInfo, setPatientInfo] = useState("");
   const [doctorInfo, setDoctorInfo] = useState("");
+  const [showDrawerDoctor, setShowDrawerDoctor] = useState(false);
+  const [showDrawerPatient, setShowDrawerPatient] = useState(false);
+  const handleToggleDrawerDoctor = () => {
+    setShowDrawerPatient(false);
+    setShowDrawerDoctor(!showDrawerDoctor);
+  };
+  const handleToggleDrawerPatient = () => {
+    setShowDrawerDoctor(false);
+    setShowDrawerPatient(!showDrawerPatient);
+  };
   // Handle time slot selection
   const handleAppoinment = (eventInfo) => {
     setSelectedTime(eventInfo);
@@ -70,6 +80,8 @@ const Appointment = () => {
   };
   const handleCancelAppointment = () => {
     setShowConfirmation(false);
+    setShowDrawerPatient(false);
+    setShowDrawerDoctor(false);
   };
   const getAppointmentsByDoctorId = (doctorId) => {
     // Make the GET request using Axios
@@ -149,17 +161,29 @@ const Appointment = () => {
   };
 
   const selectAllow = (selectInfo) => {
-    const startHour = selectInfo.start.getHours();
-    const startMinute = selectInfo.start.getMinutes();
-
+    const currentTime = new Date(); // Get the current time
+    const futureDate = new Date();
+    futureDate.setDate(futureDate.getDate() + 14);
+    const selectedTime = new Date(selectInfo.start);
+    console.log("selectedTime", selectedTime);
+    console.log("currentTime", currentTime);
+    console.log(selectedTime >= currentTime);
     // Disable selection for 12:00 PM
-    if (startHour === 12 && startMinute === 0) {
+    if (selectedTime.getHours() === 12 && selectedTime.getMinutes() === 0) {
       return false;
     }
 
-    return true;
+    // Check if the selected time is in the future
+    if (selectedTime >= currentTime && selectedTime <= futureDate) {
+      return true; // Allow selecting the appointment
+    }
+
+    return false; // Disable selecting the appointment
   };
 
+  const currentDate = new Date();
+  const futureDate = new Date();
+  futureDate.setDate(futureDate.getDate() + 14);
   return (
     <div>
       <Navigation />
@@ -172,12 +196,9 @@ const Appointment = () => {
             <li className="inline-flex items-center"></li>
             <li>
               <div className="flex items-center">
-                <Link
-                  href="/Patient/Doctor"
-                  className="ml-1 text-sm font-medium text-gray-700 hover:text-blue-600 md:ml-2 dark:text-gray-400 dark:hover:text-white"
-                >
-                  Danh sách bác sĩ
-                </Link>
+                <div className="ml-1 text-sm font-medium text-gray-700 hover:text-blue-600 md:ml-2 dark:text-gray-400 dark:hover:text-white">
+                  <Link href="/Patient/Doctor">Danh sách bác sĩ</Link>
+                </div>
               </div>
             </li>
             <li aria-current="page">
@@ -196,7 +217,7 @@ const Appointment = () => {
                   />
                 </svg>
                 <span className="ml-1 text-sm font-medium text-gray-500 md:ml-2 dark:text-gray-400">
-                  đặt lịch khám với bác sĩ {doctorInfo.name}
+                  Đặt lịch khám với bác sĩ {doctorInfo.name}
                 </span>
               </div>
             </li>
@@ -209,6 +230,10 @@ const Appointment = () => {
           initialView="timeGridWeek"
           select={handleAppoinment}
           dayMaxEvents={true}
+          validRange={{
+            // start: currentDate,
+            end: futureDate,
+          }}
           events={events}
           allDaySlot={false}
           dayMaxEventRows={true}
@@ -230,22 +255,21 @@ const Appointment = () => {
           selectAllow={selectAllow}
           eventContent={(eventInfo) => {
             return (
-              <div>
-                <button onClick={() => handleAppoinment(eventInfo)}>
-                  <p>
-                    {eventInfo.event.title === "pending"
-                      ? "Đang chờ"
-                      : eventInfo.event.title === "confirmed"
-                      ? "Đặt thành công"
-                      : eventInfo.event.title == "cancelled"
-                      ? "Đã hủy"
-                      : eventInfo.event.title}
-                  </p>
-                </button>
-              </div>
+              <button type="button" onClick={() => handleAppoinment(eventInfo)}>
+                <p>
+                  {eventInfo.event.title === "pending"
+                    ? "Đang chờ"
+                    : eventInfo.event.title === "confirmed"
+                    ? "Đặt thành công"
+                    : eventInfo.event.title === "cancelled"
+                    ? "Đã hủy"
+                    : eventInfo.event.title}
+                </p>
+              </button>
             );
           }}
         />
+
         {showConfirmation && (
           <div
             style={{ zIndex: 9999 }}
@@ -257,7 +281,7 @@ const Appointment = () => {
                 {/* Modal header */}
                 <div className="flex items-start justify-between p-4 border-b rounded-t dark:border-gray-600">
                   <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-                    Thông tin đặt khám
+                    Thông tin đặt khám {selectedEvent?.status}
                   </h3>
                   <button
                     type="button"
@@ -306,6 +330,7 @@ const Appointment = () => {
                           <div className="inline-flex items-center text-base font-semibold text-gray-900 dark:text-white">
                             <button
                               type="button"
+                              onClick={handleToggleDrawerDoctor}
                               className="py-2.5 px-5 mr-2 mb-2 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700"
                             >
                               Xem thông tin
@@ -340,6 +365,7 @@ const Appointment = () => {
                           <div className="inline-flex items-center text-base font-semibold text-gray-900 dark:text-white">
                             <button
                               type="button"
+                              onClick={handleToggleDrawerPatient}
                               className="py-2.5 px-5 mr-2 mb-2 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700"
                             >
                               Xem thông tin
@@ -412,6 +438,203 @@ const Appointment = () => {
                     </div>
                   </>
                 )}
+              </div>
+            </div>
+          </div>
+        )}
+        {showDrawerDoctor && (
+          <div
+            style={{ zIndex: 9999 }}
+            className="fixed top-0 right-0 bottom-0 w-96 bg-white shadow-lg dark:bg-gray-800"
+          >
+            <div className="max-w-2xl mx-auto overflow-hidden bg-white shadow sm:rounded-lg">
+              <div className="px-4 py-5 sm:px-6">
+                <div className="p-4 bg-white -lg rounded-2xl w-80 dark:bg-gray-800">
+                  <div className="flex flex-row items-start gap-4">
+                    <img
+                      src={doctorInfo.picture}
+                      alt="Patient"
+                      className="rounded-lg w-28 h-28"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleToggleDrawerDoctor}
+                      className="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 absolute top-2.5 right-2.5 inline-flex items-center justify-center dark:hover:bg-gray-600 dark:hover:text-white"
+                    >
+                      <svg
+                        className="w-3 h-3"
+                        aria-hidden="true"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 14 14"
+                      >
+                        <path
+                          stroke="currentColor"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"
+                        />
+                      </svg>
+
+                      <span className="sr-only">Close menu</span>
+                    </button>
+                    <div className="flex flex-col justify-between w-full h-28">
+                      <div>
+                        <p className="text-xl font-medium text-gray-800 dark:text-white">
+                          {doctorInfo.name}
+                        </p>
+                        <p className="text-xs text-gray-400"></p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="border-t border-gray-200">
+                <dl>
+                  <div className="px-4 py-5 bg-gray-50 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <dt className="text-sm font-medium text-gray-500">
+                      Giới tính
+                    </dt>
+                    <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                      {doctorInfo.gender &&
+                        `${
+                          doctorInfo.gender.charAt(0).toUpperCase() +
+                          doctorInfo.gender.slice(1)
+                        }`}
+                    </dd>
+                  </div>
+                  <div className="px-4 py-5 bg-white sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <dt className="text-sm font-medium text-gray-500">
+                      Ngày Sinh
+                    </dt>
+                    <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                      {new Date(doctorInfo.birthday).toLocaleDateString(
+                        "en-GB"
+                      )}
+                    </dd>
+                  </div>
+                  <div className="px-4 py-5 bg-gray-50 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <dt className="text-sm font-medium text-gray-500">
+                      Số điện thoại
+                    </dt>
+                    <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                      {doctorInfo.contactNumber}
+                    </dd>
+                  </div>
+                  <div className="px-4 py-5 bg-white sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <dt className="text-sm font-medium text-gray-500">
+                      Địa chỉ
+                    </dt>
+                    <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                      {doctorInfo.address}
+                    </dd>
+                  </div>
+                </dl>
+              </div>
+            </div>
+          </div>
+        )}
+        {showDrawerPatient && (
+          <div
+            style={{ zIndex: 9999 }}
+            className="fixed top-0 right-0 bottom-0 w-96 bg-white shadow-lg dark:bg-gray-800"
+          >
+            <div className="max-w-2xl mx-auto overflow-hidden bg-white shadow sm:rounded-lg">
+              <div className="px-4 py-5 sm:px-6">
+                <div className="p-4 bg-white -lg rounded-2xl w-80 dark:bg-gray-800">
+                  <div className="flex flex-row items-start gap-4">
+                    <img
+                      src={patientInfo.picture}
+                      alt="Patient"
+                      className="rounded-lg w-28 h-28"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleToggleDrawerPatient}
+                      className="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 absolute top-2.5 right-2.5 inline-flex items-center justify-center dark:hover:bg-gray-600 dark:hover:text-white"
+                    >
+                      <svg
+                        className="w-3 h-3"
+                        aria-hidden="true"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 14 14"
+                      >
+                        <path
+                          stroke="currentColor"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"
+                        />
+                      </svg>
+
+                      <span className="sr-only">Close menu</span>
+                    </button>
+                    <div className="flex flex-col justify-between w-full h-28">
+                      <div>
+                        <p className="text-xl font-medium text-gray-800 dark:text-white">
+                          {patientInfo.name}
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          {/* {patientInfo.walletAddress} */}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="border-t border-gray-200">
+                <dl>
+                  <div className="px-4 py-5 bg-gray-50 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <dt className="text-sm font-medium text-gray-500">
+                      Giới tính
+                    </dt>
+                    <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                      {patientInfo.gender &&
+                        `${
+                          patientInfo.gender.charAt(0).toUpperCase() +
+                          patientInfo.gender.slice(1)
+                        }`}
+                    </dd>
+                  </div>
+                  <div className="px-4 py-5 bg-white sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <dt className="text-sm font-medium text-gray-500">
+                      Ngày Sinh
+                    </dt>
+                    <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                      {new Date(patientInfo.birthday).toLocaleDateString(
+                        "en-GB"
+                      )}
+                    </dd>
+                  </div>
+                  <div className="px-4 py-5 bg-gray-50 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <dt className="text-sm font-medium text-gray-500">
+                      Số điện thoại
+                    </dt>
+                    <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                      {patientInfo.fatherContact && (
+                        <p className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                          <span>Bố: {patientInfo.fatherContact}</span>
+                        </p>
+                      )}
+                      {patientInfo.motherContact && (
+                        <p className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                          <span>Mẹ: {patientInfo.motherContact}</span>
+                        </p>
+                      )}
+                    </dd>
+                  </div>
+                  <div className="px-4 py-5 bg-white sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <dt className="text-sm font-medium text-gray-500">
+                      Địa chỉ
+                    </dt>
+                    <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                      {patientInfo.address}
+                    </dd>
+                  </div>
+                </dl>
               </div>
             </div>
           </div>

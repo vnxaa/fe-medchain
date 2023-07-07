@@ -19,9 +19,9 @@ const Navigation = () => {
     } else {
       const decodedToken = jwt_decode(token);
       // Decode the token to obtain the user's role
-      if (decodedToken?.doctor) {
+      if (decodedToken?.user?.role === "doctor") {
         setRole("doctor");
-        userInfo(decodedToken?.doctor);
+        userInfo(decodedToken?.user);
       } else if (decodedToken?.patient) {
         setRole("patient");
         userInfo(decodedToken?.patient);
@@ -90,16 +90,16 @@ const Navigation = () => {
           >
             <div className="px-4 py-3">
               <span className="block text-sm text-gray-900 dark:text-white">
-                {user.name}
+                {user?.name}
               </span>
               <span className="block text-sm  text-gray-500 truncate dark:text-gray-400">
-                {user.walletAddress &&
+                {/* {user.walletAddress &&
                   `${user.walletAddress.substring(
                     0,
                     5
                   )}...${user.walletAddress.substring(
                     user.walletAddress.length - 5
-                  )}`}
+                  )}`} */}
               </span>
             </div>
             <ul className="py-2" aria-labelledby="user-menu-button">
@@ -242,6 +242,21 @@ const Navigation = () => {
                 </li>
                 <li>
                   <a
+                    href="./Staff"
+                    className={`block py-2 pl-3 pr-4 ${
+                      router.pathname === "/Hospital/Staff"
+                        ? "text-white bg-blue-700 rounded md:bg-transparent md:text-blue-700 md:p-0 md:dark:text-blue-500"
+                        : "text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 dark:text-white md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent dark:border-gray-700"
+                    }`}
+                    aria-current={
+                      router.pathname === "/Hospital/Staff" ? "page" : undefined
+                    }
+                  >
+                    Nhân viên
+                  </a>
+                </li>
+                <li>
+                  <a
                     href="./Patient"
                     className={`block py-2 pl-3 pr-4 ${
                       router.pathname === "/Hospital/Patient"
@@ -262,123 +277,148 @@ const Navigation = () => {
             {role === "doctor" && (
               <>
                 <li>
-                  <Link
-                    href="/Doctor/Dashboard"
+                  <div
                     className={`block py-2 pl-3 pr-4 ${
                       router.pathname === "/Doctor/Dashboard"
                         ? "text-white bg-blue-700 rounded md:bg-transparent md:text-blue-700 md:p-0 md:dark:text-blue-500"
                         : "text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 dark:text-white md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent dark:border-gray-700"
                     }`}
-                    aria-current={
-                      router.pathname === "/Doctor/Dashboard"
-                        ? "page"
-                        : undefined
-                    }
                   >
-                    Dashboard
-                  </Link>
+                    <Link
+                      href="/Doctor/Dashboard"
+                      aria-current={
+                        router.pathname === "/Doctor/Dashboard"
+                          ? "page"
+                          : undefined
+                      }
+                    >
+                      Dashboard
+                    </Link>
+                  </div>
                 </li>
                 <li>
-                  <Link
-                    href="/Doctor/MedicalRecord"
+                  <div
                     className={`block py-2 pl-3 pr-4 ${
                       router.pathname === "/Doctor/MedicalRecord"
                         ? "text-white bg-blue-700 rounded md:bg-transparent md:text-blue-700 md:p-0 md:dark:text-blue-500"
                         : "text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 dark:text-white md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent dark:border-gray-700"
                     }`}
-                    aria-current={
-                      router.pathname === "/Doctor/MedicalRecord"
-                        ? "page"
-                        : undefined
-                    }
                   >
-                    Bệnh án
-                  </Link>
+                    <Link
+                      href="/Doctor/MedicalRecord"
+                      aria-current={
+                        router.pathname === "/Doctor/MedicalRecord"
+                          ? "page"
+                          : undefined
+                      }
+                    >
+                      Bệnh án
+                    </Link>
+                  </div>
                 </li>
                 <li>
-                  <Link
-                    href="/Doctor/Patient"
+                  <div
                     className={`block py-2 pl-3 pr-4 ${
                       router.pathname === "/Doctor/Patient"
                         ? "text-white bg-blue-700 rounded md:bg-transparent md:text-blue-700 md:p-0 md:dark:text-blue-500"
                         : "text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 dark:text-white md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent dark:border-gray-700"
                     }`}
-                    aria-current={
-                      router.pathname === "/Doctor/Patient" ? "page" : undefined
-                    }
                   >
-                    Bệnh nhân
-                  </Link>
+                    <Link
+                      href="/Doctor/Patient"
+                      aria-current={
+                        router.pathname === "/Doctor/Patient"
+                          ? "page"
+                          : undefined
+                      }
+                    >
+                      Bệnh nhân
+                    </Link>
+                  </div>
                 </li>
                 <li>
-                  <Link
-                    href="/Doctor/Appointment"
+                  <div
                     className={`block py-2 pl-3 pr-4 ${
                       router.pathname === "/Doctor/Appointment"
                         ? "text-white bg-blue-700 rounded md:bg-transparent md:text-blue-700 md:p-0 md:dark:text-blue-500"
                         : "text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 dark:text-white md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent dark:border-gray-700"
                     }`}
-                    aria-current={
-                      router.pathname === "/Doctor/Appointment"
-                        ? "page"
-                        : undefined
-                    }
                   >
-                    Lịch khám
-                  </Link>
+                    <Link
+                      href="/Doctor/Appointment"
+                      aria-current={
+                        router.pathname === "/Doctor/Appointment"
+                          ? "page"
+                          : undefined
+                      }
+                    >
+                      Lịch khám
+                    </Link>
+                  </div>
                 </li>
               </>
             )}
             {role === "patient" && (
               <>
                 <li>
-                  <a
-                    href="./Dashboard"
+                  <div
                     className={`block py-2 pl-3 pr-4 ${
                       router.pathname === "/Patient/Dashboard"
                         ? "text-white bg-blue-700 rounded md:bg-transparent md:text-blue-700 md:p-0 md:dark:text-blue-500"
                         : "text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 dark:text-white md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent dark:border-gray-700"
                     }`}
-                    aria-current={
-                      router.pathname === "/Patient/Dashboard"
-                        ? "page"
-                        : undefined
-                    }
                   >
-                    Dashboard
-                  </a>
+                    <Link
+                      href="/Patient/Dashboard"
+                      aria-current={
+                        router.pathname === "/Patient/Dashboard"
+                          ? "page"
+                          : undefined
+                      }
+                    >
+                      Dashboard
+                    </Link>
+                  </div>
                 </li>
                 <li>
-                  <a
-                    href="./MedicalRecord"
+                  <div
                     className={`block py-2 pl-3 pr-4 ${
                       router.pathname === "/Patient/MedicalRecord"
                         ? "text-white bg-blue-700 rounded md:bg-transparent md:text-blue-700 md:p-0 md:dark:text-blue-500"
                         : "text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 dark:text-white md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent dark:border-gray-700"
                     }`}
-                    aria-current={
-                      router.pathname === "/Patient/MedicalRecord"
-                        ? "page"
-                        : undefined
-                    }
                   >
-                    Bệnh án
-                  </a>
+                    <Link
+                      href="/Patient/MedicalRecord"
+                      aria-current={
+                        router.pathname === "/Patient/MedicalRecord"
+                          ? "page"
+                          : undefined
+                      }
+                    >
+                      Bệnh án
+                    </Link>
+                  </div>
                 </li>
                 <li>
-                  <a
-                    href="./Doctor"
+                  <div
                     className={`block py-2 pl-3 pr-4 ${
                       router.pathname === "/Patient/Doctor"
                         ? "text-white bg-blue-700 rounded md:bg-transparent md:text-blue-700 md:p-0 md:dark:text-blue-500"
                         : "text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 dark:text-white md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent dark:border-gray-700"
                     }`}
-                    aria-current={
-                      router.pathname === "/Patient/Doctor" ? "page" : undefined
-                    }
                   >
-                    Bác sĩ
-                  </a>
+                    <Link
+                      href="/Patient/Doctor"
+                      aria-current={
+                        router.pathname === "/Patient/Doctor"
+                          ? "page"
+                          : undefined
+                      }
+                    >
+                      Bác sĩ
+                    </Link>
+                  </div>
                 </li>
               </>
             )}

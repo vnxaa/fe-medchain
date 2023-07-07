@@ -27,7 +27,7 @@ const Settings = () => {
         console.log(decoded);
 
         // Check if the user is a doctor
-        if (decoded.doctor) {
+        if (decoded?.user?.role === "doctor") {
           // User is a doctor, allow access to the doctor page
           console.log("Access granted to doctor page");
         } else {
@@ -90,7 +90,7 @@ const Settings = () => {
     const downloadURL = await getDownloadURL(storageRef);
     console.log(downloadURL);
     const token = localStorage.getItem("token");
-    const doctorId = jwt_decode(token).doctor._id;
+    const doctorId = jwt_decode(token)?.user?._id;
 
     // Make a PUT request to update the patient's data
     axios

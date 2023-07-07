@@ -19,7 +19,7 @@ const Patient = () => {
         console.log(decoded);
 
         // Check if the user is a doctor
-        if (decoded.doctor) {
+        if (decoded?.user?.role === "doctor") {
           // User is a doctor, allow access to the doctor page
           console.log("Access granted to doctor page");
           fetchPatients();

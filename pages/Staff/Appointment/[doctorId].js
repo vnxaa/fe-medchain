@@ -162,12 +162,9 @@ const AppointmentRequests = () => {
             <li className="inline-flex items-center"></li>
             <li>
               <div className="flex items-center">
-                <Link
-                  href="/Staff/Doctor"
-                  className="ml-1 text-sm font-medium text-gray-700 hover:text-blue-600 md:ml-2 dark:text-gray-400 dark:hover:text-white"
-                >
-                  Danh sách bác sĩ
-                </Link>
+                <div className="ml-1 text-sm font-medium text-gray-700 hover:text-blue-600 md:ml-2 dark:text-gray-400 dark:hover:text-white">
+                  <Link href="/Staff/Doctor">Danh sách bác sĩ</Link>
+                </div>
               </div>
             </li>
             <li aria-current="page">

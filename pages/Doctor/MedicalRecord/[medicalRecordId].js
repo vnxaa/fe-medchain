@@ -1,26 +1,18 @@
 import axios from "axios";
-import { Contract, ethers } from "ethers";
 import jwt_decode from "jwt-decode";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
-import Web3Modal from "web3modal";
-import MedicalRecordNFT from "../../../artifacts/contracts/MedicalRecordNFT.sol/MedicalRecordNFT.json";
 import Navigation from "../../Common/Navigation";
 const MedicalRecord = () => {
   const router = useRouter();
-  const { id } = router.query;
+  const { medicalRecordId } = router.query;
+  const [medicalRecords, setMedicalRecords] = useState({});
+  const [showDrawer, setShowDrawer] = useState(false);
+  const [rejectReasons, setRejectReasons] = useState({});
   const [patientInfo, setPatientInfo] = useState({});
   const [doctorInfo, setDoctorInfo] = useState({});
-  const [medicalRecords, setMedicalRecords] = useState({});
   const [medicalRecordsResult, setMedicalRecordsResult] = useState({});
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [error, setError] = useState(null);
-  const [showDrawer, setShowDrawer] = useState(false);
-  const [reason, setReason] = useState("");
-  const [rejectReasons, setRejectReasons] = useState({});
-
   const getRejectReasonsByMedicalRecordId = async (id) => {
     try {
       const response = await axios.get(
@@ -35,13 +27,9 @@ const MedicalRecord = () => {
       );
     }
   };
-  const handleReasonChange = (e) => {
-    setReason(e.target.value);
-  };
   const handleToggleDrawer = () => {
     setShowDrawer(!showDrawer);
   };
-  // console.log(medicalRecords?.status);
   const fetchPatientInfo = async (id) => {
     try {
       const response = await axios.get(
@@ -80,22 +68,6 @@ const MedicalRecord = () => {
       console.error("Failed to fetch medical records:", error);
     }
   };
-  const updateMedicalRecordStatus = async (id, status) => {
-    try {
-      const apiUrl = `${process.env.service}/api/medicalRecord/status/${id}`;
-
-      const response = await axios.put(apiUrl, { status });
-
-      return response.data;
-    } catch (error) {
-      // Handle any errors that occurred during the process
-      console.error(error);
-      throw new Error("Failed to update the medical record status");
-    }
-  };
-  //   console.log(medicalRecordsResult);
-  //   console.log(medicalRecordsResult?);
-  //   console.log(patientInfo.walletAddress);
   useEffect(() => {
     // Get the token from localStorage
     const token = localStorage.getItem("token");
@@ -106,13 +78,13 @@ const MedicalRecord = () => {
         const decoded = jwt_decode(token);
         console.log(decoded);
 
-        // Check if the user is a hospital
-        if (decoded.hospital) {
-          // User is a hospital, allow access to the hospital page
-          console.log("Access granted to hospital page");
+        // Check if the user is a doctor
+        if (decoded?.user?.role === "doctor") {
+          // User is a doctor, allow access to the doctor page
+          console.log("Access granted to doctor page");
         } else {
-          // User is not a hospital, redirect to another page or show an error message
-          console.log("Access denied. User is not a hospital");
+          // User is not a doctor, redirect to another page or show an error message
+          console.log("Access denied. User is not a doctor");
         }
       } catch (error) {
         // Handle decoding error
@@ -120,101 +92,24 @@ const MedicalRecord = () => {
       }
     } else {
       // Token not found, redirect to login page or show an error message
-      router.push("/Hospital/LoginPage");
+      router.push("/Doctor/LoginPage");
 
       console.log("Token not found. Please log in.");
     }
-    if (id) {
-      fetchMedicalRecords(id);
-      getRejectReasonsByMedicalRecordId(id);
+    if (medicalRecordId) {
+      fetchMedicalRecords(medicalRecordId);
+      getRejectReasonsByMedicalRecordId(medicalRecordId);
     }
-  }, [id, router]);
+  }, [router, medicalRecordId]);
   useEffect(() => {
-    fetchPatientInfo(medicalRecords.patientId);
-    fetchDoctorInfo(medicalRecords.doctorId);
+    if (medicalRecords) {
+      fetchPatientInfo(medicalRecords?.patientId);
+      fetchDoctorInfo(medicalRecords?.doctorId);
+    }
   }, [medicalRecords]);
-
-  const mintNFT = async () => {
-    try {
-      setLoading(true);
-      const response = await axios.post(
-        "https://api.nft.storage/upload",
-        medicalRecordsResult,
-        {
-          headers: {
-            Authorization: `Bearer ${process.env.NFT_STORAGE_KEY}`,
-          },
-        }
-      );
-      const ipfsHash = response.data.value.cid;
-      const tokenUrl = `https://${ipfsHash}.ipfs.nftstorage.link`;
-      // console.log(tokenUrl);
-      const web3Modal = new Web3Modal();
-      const connection = await web3Modal.connect();
-      const provider = new ethers.providers.Web3Provider(connection);
-      const signer = provider.getSigner();
-
-      // Create an instance of the contract
-      const contract = new Contract(
-        process.env.NFT_ADDRESS,
-        MedicalRecordNFT.abi,
-        signer
-      );
-
-      const hash = await contract.mintToken(
-        patientInfo.walletAddress,
-        tokenUrl
-      );
-
-      if (hash) {
-        updateMedicalRecordStatus(id, "minted");
-        setMedicalRecords((prevState) => ({
-          ...prevState,
-          status: "minted",
-        }));
-      }
-
-      setSuccess(true);
-      setError(null);
-    } catch (error) {
-      console.log(error);
-      setSuccess(false);
-      setError(error.response.data);
-    } finally {
-      setLoading(false);
-    }
-  };
-  const createRejectReason = async () => {
-    try {
-      setLoading(true);
-      const response = await axios.post(
-        `${process.env.service}/api/rejectReason/`,
-        {
-          medicalRecordId: id,
-          reason: reason,
-        }
-      );
-      const createdRejectReason = response.data.rejectReason;
-      console.log("Created reject reason:", createdRejectReason);
-      updateMedicalRecordStatus(id, "reject");
-      setMedicalRecords((prevState) => ({
-        ...prevState,
-        status: "reject",
-      }));
-      setSuccess(true);
-      setError(null);
-    } catch (error) {
-      console.error("Failed to create reject reason:", error.response.data);
-      setSuccess(false);
-      setError(error.response.data);
-    } finally {
-      setLoading(false);
-    }
-  };
   return (
     <div>
       <Navigation />
-
       <div className="sm:container center sm:mx-auto">
         <nav
           className="flex px-5 py-3 text-gray-700 border border-gray-200 rounded-lg bg-gray-50 dark:bg-gray-800 dark:border-gray-700"
@@ -225,7 +120,7 @@ const MedicalRecord = () => {
             <li>
               <div className="flex items-center">
                 <div className="ml-1 text-sm font-medium text-gray-700 hover:text-blue-600 md:ml-2 dark:text-gray-400 dark:hover:text-white">
-                  <Link href="/Hospital/MedicalRecord">Danh sách bệnh án</Link>
+                  <Link href="/Doctor/MedicalRecord">Danh sách bệnh án</Link>
                 </div>
               </div>
             </li>
@@ -490,88 +385,13 @@ const MedicalRecord = () => {
                   </div>
                   {/* Modal footer */}
                   <div className="flex items-center p-6 space-x-2 border-t border-gray-200 rounded-b dark:border-gray-600">
-                    {!loading &&
-                      !success &&
-                      !error &&
-                      medicalRecords?.status === "draft" && (
-                        <>
-                          <button
-                            onClick={mintNFT}
-                            data-modal-hide="staticModal"
-                            type="button"
-                            className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-                          >
-                            Tạo NFT bệnh án
-                          </button>
-                          <button
-                            onClick={handleToggleDrawer}
-                            data-modal-hide="staticModal"
-                            type="button"
-                            className="text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-                          >
-                            Từ chối
-                          </button>
-                        </>
-                      )}
-                    {!loading && success && (
-                      <div>
-                        {/* <button
-                          data-modal-hide="staticModal"
-                          type="button"
-                          className="text-gray-500 bg-white hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-blue-300 rounded-lg border border-gray-200 text-sm font-medium px-5 py-2.5 hover:text-gray-900 focus:z-10 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-500 dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-gray-600"
-                        >
-                          Xem lý do
-                        </button> */}
-                      </div>
-                    )}
-                    {!loading && error && (
+                    {medicalRecords?.status === "reject" && (
                       <>
-                        <button
-                          onClick={mintNFT}
-                          data-modal-hide="staticModal"
-                          type="button"
-                          className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-                        >
-                          Tạo NFT bệnh án
-                        </button>
                         <button
                           onClick={handleToggleDrawer}
                           data-modal-hide="staticModal"
                           type="button"
                           className="text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-                        >
-                          Từ chối
-                        </button>
-                      </>
-                    )}
-                    {loading && (
-                      <div>
-                        <svg
-                          aria-hidden="true"
-                          className="w-8 h-8 mr-2 text-gray-200 animate-spin dark:text-gray-600 fill-blue-600"
-                          viewBox="0 0 100 101"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <path
-                            d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
-                            fill="currentColor"
-                          />
-                          <path
-                            d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
-                            fill="currentFill"
-                          />
-                        </svg>
-                        <span className="sr-only">Loading...</span>
-                      </div>
-                    )}
-                    {medicalRecords?.status === "reject" && (
-                      <>
-                        <button
-                          data-modal-hide="staticModal"
-                          onClick={handleToggleDrawer}
-                          type="button"
-                          className="text-gray-500 bg-white hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-blue-300 rounded-lg border border-gray-200 text-sm font-medium px-5 py-2.5 hover:text-gray-900 focus:z-10 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-500 dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-gray-600"
                         >
                           Xem lý do
                         </button>
@@ -606,172 +426,82 @@ const MedicalRecord = () => {
           </div>
         </div>
       </div>
-      {showDrawer && (
-        <div
-          style={{ zIndex: 9999 }}
-          className="fixed p-4 top-0 right-0 bottom-0 w-96 bg-white shadow-lg dark:bg-gray-800"
-        >
-          <div>
-            <h5 className="inline-flex  items-center mb-6 text-base font-semibold text-gray-500 dark:text-gray-400">
-              <span className="ml-2 bg-red-100 text-red-800 text-sm font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-blue-900 dark:text-blue-300">
-                Từ chối
-              </span>
-            </h5>
-            <button
-              type="button"
-              onClick={handleToggleDrawer}
-              data-drawer-hide="drawer-contact"
-              aria-controls="drawer-contact"
-              className="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 absolute top-2.5 right-2.5 inline-flex items-center justify-center dark:hover:bg-gray-600 dark:hover:text-white"
-            >
-              <svg
-                className="w-3 h-3"
-                aria-hidden="true"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 14 14"
+      {showDrawer ||
+        (medicalRecords?.status === "reject" && (
+          <div
+            style={{ zIndex: 9999 }}
+            className="fixed p-4 top-0 right-0 bottom-0 w-96 bg-white shadow-lg dark:bg-gray-800"
+          >
+            <div>
+              <h5 className="inline-flex  items-center mb-6 text-base font-semibold text-gray-500 dark:text-gray-400">
+                <span className="ml-2 bg-red-100 text-red-800 text-sm font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-blue-900 dark:text-blue-300">
+                  Từ chối
+                </span>
+              </h5>
+              <button
+                type="button"
+                onClick={handleToggleDrawer}
+                data-drawer-hide="drawer-contact"
+                aria-controls="drawer-contact"
+                className="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 absolute top-2.5 right-2.5 inline-flex items-center justify-center dark:hover:bg-gray-600 dark:hover:text-white"
               >
-                <path
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"
-                />
-              </svg>
-              <span className="sr-only">Close menu</span>
-            </button>
-            <form action="#" className="mb-6">
-              <div className="flex items-center mb-5 space-x-4">
-                <img
-                  className="w-10 h-10 rounded-full"
-                  src={doctorInfo.picture}
-                />
-                <div className="font-medium dark:text-white">
-                  <div>{doctorInfo?.name}</div>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">
-                    {doctorInfo.contactNumber}
-                  </div>
-                </div>
-              </div>
-              <div className="mb-6">
-                <label
-                  htmlFor="message"
-                  className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                <svg
+                  className="w-3 h-3"
+                  aria-hidden="true"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 14 14"
                 >
-                  Lý do:
-                </label>
-                {medicalRecords?.status === "draft" ? (
-                  <textarea
-                    id="message"
-                    onChange={handleReasonChange}
-                    rows={4}
-                    className="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                    placeholder="Điền lý do..."
-                    defaultValue={""}
-                    required
+                  <path
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"
                   />
-                ) : (
+                </svg>
+                <span className="sr-only">Close menu</span>
+              </button>
+              <form action="#" className="mb-6">
+                {/* <div className="flex items-center mb-5 space-x-4">
+                  <img
+                    className="w-10 h-10 rounded-full"
+                    src={doctorInfo.picture}
+                  />
+                  <div className="font-medium dark:text-white">
+                    <div>{doctorInfo?.name}</div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                      {doctorInfo.contactNumber}
+                    </div>
+                  </div>
+                </div> */}
+                <div className="mb-6">
+                  <label
+                    htmlFor="message"
+                    className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                  >
+                    Lý do:
+                  </label>
+
                   <textarea
                     rows={4}
                     className="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                     defaultValue={rejectReasons || ""}
                     disabled={true}
                   />
-                )}
-              </div>
-              {!loading &&
-                !success &&
-                !error &&
-                medicalRecords?.status === "draft" && (
-                  <>
-                    <button
-                      type="submit"
-                      onClick={createRejectReason}
-                      className="text-white bg-blue-700 hover:bg-blue-800 w-full focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800 block"
-                    >
-                      Gửi đến Bác Sĩ
-                    </button>
-                  </>
-                )}
-              {!loading && error && (
-                <div>
-                  <div
-                    className="flex items-center p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400"
-                    role="alert"
-                  >
-                    <svg
-                      className="flex-shrink-0 inline w-4 h-4 mr-3"
-                      aria-hidden="true"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z" />
-                    </svg>
-                    <span className="sr-only">Info</span>
-                    <div>
-                      <span className="font-medium">Lỗi</span> Vui lòng nhập lý
-                      do
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={createRejectReason}
-                    data-modal-hide="staticModal"
-                    type="button"
-                    className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-                  >
-                    Thử lại
-                  </button>
                 </div>
-              )}
-              {!loading && success && (
-                <div
-                  className="flex items-center p-4 mb-4 text-sm text-green-800 border border-green-300 rounded-lg bg-green-50 dark:bg-gray-800 dark:text-green-400 dark:border-green-800"
-                  role="alert"
+                <a
+                  //   onClick={mintNFT}
+                  href={`/Doctor/EditMedicalRecord/${medicalRecordId}`}
+                  type="button"
+                  className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
                 >
-                  <svg
-                    className="flex-shrink-0 inline w-4 h-4 mr-3"
-                    aria-hidden="true"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z" />
-                  </svg>
-                  <span className="sr-only">Info</span>
-                  <div>
-                    <span className="font-medium">Gửi thành công</span>
-                  </div>
-                </div>
-              )}
-              {loading && (
-                <div>
-                  <svg
-                    aria-hidden="true"
-                    className="w-8 h-8 mr-2 text-gray-200 animate-spin dark:text-gray-600 fill-blue-600"
-                    viewBox="0 0 100 101"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
-                      fill="currentColor"
-                    />
-                    <path
-                      d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
-                      fill="currentFill"
-                    />
-                  </svg>
-                  <span className="sr-only">Loading...</span>
-                </div>
-              )}
-            </form>
+                  Sửa bệnh án
+                </a>
+              </form>
+            </div>
           </div>
-        </div>
-      )}
-      {/* Add your page content here */}
+        ))}
     </div>
   );
 };
