@@ -20,7 +20,7 @@ export default function MedicalRecordHome() {
               target="_blank"
               className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 text-center mr-3 md:mr-0 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
             >
-              Get started
+              Hospital
             </a>
             <button
               data-collapse-toggle="navbar-sticky"
@@ -113,7 +113,7 @@ export default function MedicalRecordHome() {
             target="_blank"
             className="inline-flex mb-20 items-center justify-center px-5 py-3 text-base font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 dark:focus:ring-blue-900"
           >
-            Learn more
+            Hospital Login
             <svg
               className="w-5 h-5 ml-2 -mr-1"
               fill="currentColor"
@@ -259,7 +259,7 @@ export default function MedicalRecordHome() {
               target="_blank"
               className="inline-flex justify-center items-center py-2.5 px-5 text-base font-medium text-center text-white rounded-lg bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 dark:focus:ring-blue-900"
             >
-              Read more
+              Patient Login
               <svg
                 aria-hidden="true"
                 className="ml-2 -mr-1 w-4 h-4"
@@ -289,26 +289,18 @@ export default function MedicalRecordHome() {
                 with our secure and seamless platform.
               </p>
               <a
-                href="/Doctor/LoginPage"
+                href="/Register/RequestAccount"
                 target="_blank"
                 className="text-blue-600 dark:text-blue-500 hover:underline font-medium text-lg inline-flex items-center"
               >
-                Read more
-                <svg
-                  aria-hidden="true"
-                  className="w-4 h-4 ml-2"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M17 8l4 4m0 0l-4 4m4-4H3"
-                  />
-                </svg>
+                Request Account
+              </a>
+              <a
+                href="/Doctor/LoginPage"
+                target="_blank"
+                className="text-blue-600 ml-5 dark:text-blue-500 hover:underline font-medium text-lg inline-flex items-center"
+              >
+                Login
               </a>
             </div>
             <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-8 md:p-12">
@@ -324,26 +316,18 @@ export default function MedicalRecordHome() {
                 conveniently book their healthcare visits.
               </p>
               <a
-                href="/Staff/LoginPage"
+                href="/Register/RequestAccount"
                 target="_blank"
                 className="text-blue-600 dark:text-blue-500 hover:underline font-medium text-lg inline-flex items-center"
               >
-                Read more
-                <svg
-                  aria-hidden="true"
-                  className="w-4 h-4 ml-2"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M17 8l4 4m0 0l-4 4m4-4H3"
-                  />
-                </svg>
+                Request Account
+              </a>
+              <a
+                href="/Staff/LoginPage"
+                target="_blank"
+                className="text-blue-600 ml-5 dark:text-blue-500 hover:underline font-medium text-lg inline-flex items-center"
+              >
+                Login
               </a>
             </div>
           </div>

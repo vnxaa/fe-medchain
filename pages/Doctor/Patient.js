@@ -91,7 +91,18 @@ const Patient = () => {
                   <td className="px-6 py-4">
                     {calculateAge(patient.birthday)}
                   </td>
-                  <td className="px-6 py-4">{patient.contactNumber}</td>
+                  <td className="px-6 py-4">
+                    {patient.fatherContact && (
+                      <p className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                        <span>Bố: {patient.fatherContact}</span>
+                      </p>
+                    )}
+                    {patient.motherContact && (
+                      <p className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                        <span>Mẹ: {patient.motherContact}</span>
+                      </p>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>

@@ -9,6 +9,7 @@ const MedicalRecord = () => {
   const router = useRouter();
   const [nfts, setNFTs] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+
   const fetchNFTs = async (address) => {
     try {
       setIsLoading(true);

@@ -15,7 +15,10 @@ const Settings = () => {
   const [birthday, setBirthday] = useState("");
   const [address, setAddress] = useState("");
   const [contactNumber, setContactNumber] = useState("");
-
+  const [fatherName, setFatherName] = useState("");
+  const [motherName, setMotherName] = useState("");
+  const [fatherContact, setFatherContact] = useState("");
+  const [motherContact, setMotherContact] = useState("");
   useEffect(() => {
     // Get the token from localStorage
     const token = localStorage.getItem("token");
@@ -46,7 +49,21 @@ const Settings = () => {
       console.log("Token not found. Please log in.");
     }
   }, [router]);
+  const handleFatherNameChange = (e) => {
+    setFatherName(e.target.value);
+  };
 
+  const handleMotherNameChange = (e) => {
+    setMotherName(e.target.value);
+  };
+
+  const handleFatherContactChange = (e) => {
+    setFatherContact(e.target.value);
+  };
+
+  const handleMotherContactChange = (e) => {
+    setMotherContact(e.target.value);
+  };
   const handleNameChange = (e) => {
     setName(e.target.value);
   };
@@ -88,7 +105,7 @@ const Settings = () => {
     const downloadURL = await getDownloadURL(storageRef);
 
     const token = localStorage.getItem("token");
-    const patientId = jwt_decode(token).patient._id;
+    const patientId = jwt_decode(token)?.patient?._id;
 
     // Make a PUT request to update the patient's data
     axios
@@ -98,7 +115,10 @@ const Settings = () => {
         picture: downloadURL,
         birthday,
         address,
-        contactNumber,
+        fatherName,
+        motherName,
+        fatherContact,
+        motherContact,
       })
       .then((response) => {
         console.log("Patient data updated successfully");
@@ -127,7 +147,7 @@ const Settings = () => {
                   htmlFor="name"
                   className="block text-sm font-medium leading-6 text-gray-900"
                 >
-                  Tên bệnh nhân
+                  Họ và tên bệnh nhân
                 </label>
                 <div className="mt-2">
                   <div className="flex rounded-md shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-inset focus-within:ring-indigo-600 sm:max-w-md">
@@ -142,6 +162,47 @@ const Settings = () => {
                   </div>
                 </div>
               </div>
+              <div className="sm:col-span-4">
+                <label
+                  htmlFor="faname"
+                  className="block text-sm font-medium leading-6 text-gray-900"
+                >
+                  Họ và tên bố
+                </label>
+                <div className="mt-2">
+                  <div className="flex rounded-md shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-inset focus-within:ring-indigo-600 sm:max-w-md">
+                    <input
+                      required
+                      type="text"
+                      name="faname"
+                      id="faname"
+                      onChange={handleFatherNameChange}
+                      className="block flex-1 border-0 bg-transparent py-1.5 pl-1 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="sm:col-span-4">
+                <label
+                  htmlFor="moname"
+                  className="block text-sm font-medium leading-6 text-gray-900"
+                >
+                  Họ và tên mẹ
+                </label>
+                <div className="mt-2">
+                  <div className="flex rounded-md shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-inset focus-within:ring-indigo-600 sm:max-w-md">
+                    <input
+                      required
+                      type="text"
+                      name="moname"
+                      id="moname"
+                      onChange={handleMotherNameChange}
+                      className="block flex-1 border-0 bg-transparent py-1.5 pl-1 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6"
+                    />
+                  </div>
+                </div>
+              </div>
+
               <div className="sm:col-span-3">
                 <label
                   htmlFor="gender"
@@ -226,19 +287,39 @@ const Settings = () => {
 
               <div className="sm:col-span-4">
                 <label
-                  htmlFor="phoneNumber"
+                  htmlFor="faphoneNumber"
                   className="block text-sm font-medium leading-6 text-gray-900"
                 >
-                  Số điện thoại
+                  Số điện thoại bố
                 </label>
                 <div className="mt-2">
                   <div className="flex rounded-md shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-inset focus-within:ring-indigo-600 sm:max-w-md">
                     <input
                       required
                       type="text"
-                      name="phoneNumber"
-                      id="phoneNumber"
-                      onChange={handleContactNumberChange}
+                      name="faphoneNumber"
+                      id="faphoneNumber"
+                      onChange={handleFatherContactChange}
+                      className="block flex-1 border-0 bg-transparent py-1.5 pl-1 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="sm:col-span-4">
+                <label
+                  htmlFor="mophoneNumber"
+                  className="block text-sm font-medium leading-6 text-gray-900"
+                >
+                  Số điện thoại mẹ
+                </label>
+                <div className="mt-2">
+                  <div className="flex rounded-md shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-inset focus-within:ring-indigo-600 sm:max-w-md">
+                    <input
+                      required
+                      type="text"
+                      name="mophoneNumber"
+                      id="mophoneNumber"
+                      onChange={handleMotherContactChange}
                       className="block flex-1 border-0 bg-transparent py-1.5 pl-1 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6"
                     />
                   </div>

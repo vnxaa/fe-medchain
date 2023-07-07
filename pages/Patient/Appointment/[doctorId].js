@@ -13,6 +13,7 @@ const Appointment = () => {
   const [selectedTime, setSelectedTime] = useState(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [patientId, setPatientId] = useState(null);
+  const [currentPatientId, setCurrentPatientId] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [appointments, setAppointments] = useState([]);
   const [events, setEvents] = useState([]);
@@ -20,6 +21,7 @@ const Appointment = () => {
   const [doctorInfo, setDoctorInfo] = useState("");
   const [showDrawerDoctor, setShowDrawerDoctor] = useState(false);
   const [showDrawerPatient, setShowDrawerPatient] = useState(false);
+
   const handleToggleDrawerDoctor = () => {
     setShowDrawerPatient(false);
     setShowDrawerDoctor(!showDrawerDoctor);
@@ -32,6 +34,19 @@ const Appointment = () => {
   const handleAppoinment = (eventInfo) => {
     setSelectedTime(eventInfo);
     setSelectedEvent(eventInfo.event);
+    console.log(eventInfo.event);
+    // console.log(eventInfo.event.extendedProps.patientId);
+    // fetchPatientInfo(eventInfo.event.extendedProps.patientId);
+    if (
+      eventInfo.event &&
+      eventInfo.event.extendedProps &&
+      eventInfo.event.extendedProps.patientId
+    ) {
+      // setPatientId(eventInfo.event.extendedProps.patientId);
+      fetchPatientInfo(eventInfo.event.extendedProps.patientId);
+    } else {
+      fetchPatientInfo(currentPatientId);
+    }
     setShowConfirmation(true);
   };
   const fetchPatientInfo = async (patientId) => {
@@ -61,7 +76,7 @@ const Appointment = () => {
     const endTime = new Date(selectedTime.endStr).toLocaleTimeString();
     axios
       .post(`${process.env.service}/api/appointment/create`, {
-        patientId: patientId,
+        patientId: currentPatientId,
         doctorId: doctorId,
         appointmentDate: selectedTime.startStr,
         startTime: selectedTime.startStr,
@@ -90,12 +105,19 @@ const Appointment = () => {
       .then((response) => {
         // Handle the response data
         const appointments = response.data.appointments;
-        setAppointments(appointments);
+        const filteredAppointments = appointments.filter(
+          (appointment) =>
+            appointment.status === "pending" ||
+            appointment.status === "confirmed" ||
+            currentPatientId == appointment.patient
+        );
+        setAppointments(filteredAppointments);
         setEvents(
-          appointments.map((appointment) => ({
+          filteredAppointments.map((appointment) => ({
             title: appointment.status,
             start: appointment.startTime,
             end: appointment.endTime,
+            patientId: appointment.patient,
             color: statusColors[appointment.status],
           }))
         );
@@ -119,7 +141,7 @@ const Appointment = () => {
         if (decoded.patient) {
           // User is a patient, allow access to the patient page
           console.log("Access granted to patient page");
-          setPatientId(decoded.patient._id);
+          setCurrentPatientId(decoded?.patient?._id);
         } else {
           // User is not a patient, redirect to another page or show an error message
           console.log("Access denied. User is not a patient");
@@ -134,10 +156,10 @@ const Appointment = () => {
 
       console.log("Token not found. Please log in.");
     }
-    if (patientId) {
-      fetchPatientInfo(patientId);
-    }
-  }, [router, patientId]);
+    // if (patientId) {
+    //   fetchPatientInfo(patientId);
+    // }
+  }, [router]);
   useEffect(() => {
     if (doctorId) {
       // Initial fetch of appointments
@@ -167,7 +189,7 @@ const Appointment = () => {
     const selectedTime = new Date(selectInfo.start);
     console.log("selectedTime", selectedTime);
     console.log("currentTime", currentTime);
-    console.log(selectedTime >= currentTime);
+
     // Disable selection for 12:00 PM
     if (selectedTime.getHours() === 12 && selectedTime.getMinutes() === 0) {
       return false;
@@ -257,12 +279,30 @@ const Appointment = () => {
             return (
               <button type="button" onClick={() => handleAppoinment(eventInfo)}>
                 <p>
-                  {eventInfo.event.title === "pending"
+                  {/* {eventInfo.event.title === "confirmed" &&
+                  eventInfo.event.extendedProps.patientId === currentPatientId
+                    ? "Đã đặt thành công"
+                    : "Đã có người đặt"} */}
+
+                  {eventInfo.event.title === "pending" &&
+                  eventInfo.event.extendedProps.patientId === currentPatientId
                     ? "Đang chờ"
-                    : eventInfo.event.title === "confirmed"
+                    : eventInfo.event.title === "confirmed" &&
+                      eventInfo.event.extendedProps.patientId ===
+                        currentPatientId
                     ? "Đặt thành công"
-                    : eventInfo.event.title === "cancelled"
+                    : eventInfo.event.title === "cancelled" &&
+                      eventInfo.event.extendedProps.patientId ===
+                        currentPatientId
                     ? "Đã hủy"
+                    : eventInfo.event.title === "confirmed" &&
+                      eventInfo.event.extendedProps.patientId !==
+                        currentPatientId
+                    ? "Đã có người đặt"
+                    : eventInfo.event.title === "pending" &&
+                      eventInfo.event.extendedProps.patientId !==
+                        currentPatientId
+                    ? "Đã có người đặt"
                     : eventInfo.event.title}
                 </p>
               </button>

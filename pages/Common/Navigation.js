@@ -145,7 +145,15 @@ const Navigation = () => {
               </li>
               <li>
                 <a
-                  href="./LoginPage"
+                  href={
+                    role === "doctor"
+                      ? "/Doctor/LoginPage"
+                      : role === "hospital"
+                      ? "/Hospital/LoginPage"
+                      : role === "patient"
+                      ? "/Patient/LoginPage"
+                      : ""
+                  }
                   className="block px-4 py-2 text-sm text-gray-700 text-red-700 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white"
                   onClick={handleSignOut}
                 >

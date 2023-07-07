@@ -109,7 +109,20 @@ const Profile = () => {
                   Số điện thoại
                 </dt>
                 <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                  {patientInfo.contactNumber}
+                  {patientInfo.fatherContact && (
+                    <p className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                      <span>
+                        Bố {patientInfo.fatherName}: {patientInfo.fatherContact}
+                      </span>
+                    </p>
+                  )}
+                  {patientInfo.motherContact && (
+                    <p className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                      <span>
+                        Mẹ {patientInfo.motherName}: {patientInfo.motherContact}
+                      </span>
+                    </p>
+                  )}
                 </dd>
               </div>
               <div className="px-4 py-5 bg-white sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
@@ -122,7 +135,7 @@ const Profile = () => {
           </div>
         </div>
 
-        <div
+        {/* <div
           className="mx-auto overflow-hidden bg-white shadow sm:rounded-lg"
           style={{ marginTop: "10px" }}
         >
@@ -178,7 +191,7 @@ const Profile = () => {
               </table>
             </div>
           )}
-        </div>
+        </div> */}
       </div>
     </div>
   );
