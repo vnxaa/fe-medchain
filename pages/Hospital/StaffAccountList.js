@@ -121,6 +121,7 @@ const StaffAccountList = () => {
           password,
           role: "staff",
           email: selectedEmail,
+          contactNumber: selectedRecordPhoneNumber,
         }
       );
 
