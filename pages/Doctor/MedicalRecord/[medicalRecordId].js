@@ -16,15 +16,13 @@ const MedicalRecord = () => {
   const getRejectReasonsByMedicalRecordId = async (id) => {
     try {
       const response = await axios.get(
-        `${process.env.service}/api/rejectReason/?medicalRecordId=${id}`
+        `${process.env.service}/api/rejectReason/medicalRecord/${id}`
       );
-      const reasons = response.data?.rejectReasons[0]?.reason;
+      const reasons = response.data?.rejectReason?.reason;
+
       setRejectReasons(reasons);
     } catch (error) {
-      console.error(
-        "Failed to fetch reject reasons:",
-        error.response.data.message
-      );
+      console.error("Failed to fetch reject reasons:", error);
     }
   };
   const handleToggleDrawer = () => {
