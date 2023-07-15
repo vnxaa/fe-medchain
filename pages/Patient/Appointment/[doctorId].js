@@ -1,3 +1,4 @@
+import styled from "@emotion/styled";
 import interactionPlugin from "@fullcalendar/interaction";
 import FullCalendar from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
@@ -5,8 +6,25 @@ import axios from "axios";
 import jwt_decode from "jwt-decode";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import Navigation from "../../Common/Navigation";
+export const StyleWrapper = styled.div`
+  .fc td {
+    // background: red;
+  }
+  .fc-col-header-cell {
+    padding: 20px;
+  }
+  .fc-col-header {
+    background: #f1f5f8;
+  }
+  :root {
+    --fc-today-bg-color: black !important;
+  }
+  .fc-timegrid-slot-lane {
+    height: 40px;
+  }
+`;
 const Appointment = () => {
   const router = useRouter();
   const { doctorId } = router.query;
@@ -21,7 +39,9 @@ const Appointment = () => {
   const [doctorInfo, setDoctorInfo] = useState("");
   const [showDrawerDoctor, setShowDrawerDoctor] = useState(false);
   const [showDrawerPatient, setShowDrawerPatient] = useState(false);
-
+  const [availableSlots, setAvailableSlots] = useState([]);
+  const [slotId, setSlotId] = useState(null);
+  const [loading, setLoading] = useState(false);
   const handleToggleDrawerDoctor = () => {
     setShowDrawerPatient(false);
     setShowDrawerDoctor(!showDrawerDoctor);
@@ -32,9 +52,10 @@ const Appointment = () => {
   };
   // Handle time slot selection
   const handleAppoinment = (eventInfo) => {
-    setSelectedTime(eventInfo);
+    setSlotId(eventInfo.event?.extendedProps?.id);
+    setSelectedTime(eventInfo?.event);
     setSelectedEvent(eventInfo.event);
-    console.log(eventInfo.event);
+    // console.log(eventInfo.event);
     // console.log(eventInfo.event.extendedProps.patientId);
     // fetchPatientInfo(eventInfo.event.extendedProps.patientId);
     if (
@@ -70,63 +91,138 @@ const Appointment = () => {
       console.error(error);
     }
   };
-  const handleConfirmAppointment = () => {
+  const handleConfirmAppointment = async () => {
     // Make the appointment request using Axios
-    const startTime = new Date(selectedTime.startStr).toLocaleTimeString();
-    const endTime = new Date(selectedTime.endStr).toLocaleTimeString();
-    axios
-      .post(`${process.env.service}/api/appointment/create`, {
-        patientId: currentPatientId,
-        doctorId: doctorId,
-        appointmentDate: selectedTime.startStr,
-        startTime: selectedTime.startStr,
-        endTime: selectedTime.endStr,
-      })
-      .then((response) => {
-        console.log("Appointment created successfully:", response.data);
-        // Handle success response, e.g., show a success message to the user
-        getAppointmentsByDoctorId(doctorId);
-      })
-      .catch((error) => {
-        console.error("Failed to create appointment:", error);
-        // Handle error, e.g., show an error message to the user
-      });
-    setShowConfirmation(false);
+    try {
+      setLoading(true);
+      await axios
+        .post(`${process.env.service}/api/appointment/create`, {
+          patientId: currentPatientId,
+          doctorId: doctorId,
+          slotId: slotId,
+        })
+        .then((response) => {
+          console.log("Appointment created successfully:", response.data);
+          // Handle success response, e.g., show a success message to the user
+          fetchDataEvents(doctorId, currentPatientId);
+        })
+        .catch((error) => {
+          console.error("Failed to create appointment:", error);
+          // Handle error, e.g., show an error message to the user
+        });
+    } catch (error) {
+      console.error("Error creating appointment:", error);
+      // Handle error, e.g., show an error message to the user
+    } finally {
+      setLoading(false);
+      setShowConfirmation(false);
+    }
   };
+
   const handleCancelAppointment = () => {
     setShowConfirmation(false);
     setShowDrawerPatient(false);
     setShowDrawerDoctor(false);
   };
-  const getAppointmentsByDoctorId = (doctorId) => {
-    // Make the GET request using Axios
-    axios
-      .get(`${process.env.service}/api/appointment/doctor/${doctorId}`)
-      .then((response) => {
-        // Handle the response data
-        const appointments = response.data.appointments;
-        const filteredAppointments = appointments.filter(
-          (appointment) =>
-            appointment.status === "pending" ||
-            appointment.status === "confirmed" ||
-            currentPatientId == appointment.patient
-        );
-        setAppointments(filteredAppointments);
-        setEvents(
-          filteredAppointments.map((appointment) => ({
-            title: appointment.status,
-            start: appointment.startTime,
-            end: appointment.endTime,
-            patientId: appointment.patient,
-            color: statusColors[appointment.status],
-          }))
-        );
-      })
-      .catch((error) => {
-        // Handle any errors
-        console.error(error);
-      });
-  };
+  // const getAppointmentsByDoctorId = (doctorId) => {
+  //   // Make the GET request using Axios
+  //   axios
+  //     .get(`${process.env.service}/api/appointment/doctor/${doctorId}`)
+  //     .then((response) => {
+  //       // Handle the response data
+  //       const appointments = response.data.appointments;
+
+  //       const filteredAppointments = appointments.filter(
+  //         (appointment) =>
+  //           appointment.status === "pending" ||
+  //           appointment.status === "confirmed" ||
+  //           currentPatientId == appointment.patient
+  //       );
+  //       setAppointments(filteredAppointments);
+  //       const updatedEvents = [
+  //         ...filteredAppointments.map((appointment) => ({
+  //           title: appointment.status,
+  //           start: appointment.slot.startTime,
+  //           end: appointment.slot.endTime,
+  //           patientId: appointment.patient,
+  //           color: statusColors[appointment.status],
+  //         })),
+  //         ...availableSlots,
+  //       ];
+  //       setEvents(updatedEvents);
+  //     })
+  //     .catch((error) => {
+  //       // Handle any errors
+  //       console.error(error);
+  //     });
+  // };
+
+  // const getAvailableSlotsByDoctorId = async (doctorId) => {
+  //   try {
+  //     const response = await axios.get(
+  //       `${process.env.service}/api/availableSlot/doctors/${doctorId}`
+  //     );
+
+  //     const availableSlots = response.data.availableSlots.filter(
+  //       (slot) =>
+  //         !slot.isBooked &&
+  //         new Date(slot.startTime) >= new Date() &&
+  //         !appointments.some(
+  //           (appointment) =>
+  //             appointment.slot._id === slot._id &&
+  //             appointment.status === "pending"
+  //         )
+  //     );
+  //     console.log(availableSlots);
+  //     const events = availableSlots.map((slot) => ({
+  //       title: "Available",
+  //       start: slot.startTime,
+  //       end: slot.endTime,
+  //       extendedProps: {
+  //         id: slot._id,
+  //       },
+  //     }));
+  //     setAvailableSlots(events);
+  //   } catch (error) {
+  //     console.error(error);
+  //     throw error;
+  //   }
+  // };
+  const fetchDataEvents = useCallback(async (doctorId, patientId) => {
+    try {
+      const response = await axios.get(
+        `${process.env.service}/api/events/patient/${doctorId}/${patientId}`
+      );
+      const { availableSlots, appointments } = response.data;
+
+      const events = [
+        ...appointments.map((appointment) => ({
+          appointmentId: appointment?._id,
+          title: appointment?.status,
+          start: appointment?.slot?.startTime,
+          end: appointment?.slot?.endTime,
+          patientId: appointment?.patient,
+          color: statusColors[appointment?.status],
+        })),
+        ...availableSlots.map((slot) => ({
+          title: "Available",
+          start: slot?.startTime,
+          end: slot?.endTime,
+          extendedProps: {
+            id: slot?._id,
+          },
+        })),
+      ];
+
+      setAppointments(appointments);
+      setAvailableSlots(availableSlots);
+      setEvents(events);
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  }, []);
+
   useEffect(() => {
     // Get the token from localStorage
     const token = localStorage.getItem("token");
@@ -159,22 +255,27 @@ const Appointment = () => {
     // if (patientId) {
     //   fetchPatientInfo(patientId);
     // }
-  }, [router]);
+  }, [router, setCurrentPatientId]);
   useEffect(() => {
-    if (doctorId) {
-      // Initial fetch of appointments
-      getAppointmentsByDoctorId(doctorId);
+    if (doctorId && currentPatientId) {
+      // Fetch doctor information
+
       fetchDoctorInfo(doctorId);
 
-      // Fetch appointments every 5 seconds
-      const intervalId = setInterval(() => {
-        getAppointmentsByDoctorId(doctorId);
-      }, 5000);
+      // Fetch events data
+      fetchDataEvents(doctorId, currentPatientId);
 
-      // Cleanup the interval when the component unmounts or when the doctorId changes
+      // Fetch events data every 5 seconds
+      const intervalId = setInterval(() => {
+        fetchDataEvents(doctorId, currentPatientId).catch((error) => {
+          console.error(error);
+        });
+      }, 6000);
+
+      // Cleanup the interval when the component unmounts or when the doctorId or currentPatientId changes
       return () => clearInterval(intervalId);
     }
-  }, [doctorId, getAppointmentsByDoctorId]);
+  }, [doctorId, currentPatientId, fetchDataEvents]);
 
   const statusColors = {
     pending: "#e3a008",
@@ -190,12 +291,6 @@ const Appointment = () => {
     console.log("selectedTime", selectedTime);
     console.log("currentTime", currentTime);
 
-    // Disable selection for 12:00 PM
-    if (selectedTime.getHours() === 12 && selectedTime.getMinutes() === 0) {
-      return false;
-    }
-
-    // Check if the selected time is in the future
     if (selectedTime >= currentTime && selectedTime <= futureDate) {
       return true; // Allow selecting the appointment
     }
@@ -204,112 +299,136 @@ const Appointment = () => {
   };
 
   const currentDate = new Date();
-  const futureDate = new Date();
-  futureDate.setDate(futureDate.getDate() + 14);
+  const startOfWeek = new Date(currentDate);
+  startOfWeek.setDate(startOfWeek.getDate() - currentDate.getDay()); // Đưa ngày về đầu tuần (chủ nhật)
+  const endOfWeek = new Date(startOfWeek);
+  endOfWeek.setDate(endOfWeek.getDate() + 7); // Thêm một tuần vào cuối tuần
+
+  // futureDate.setDate(futureDate.getDate() + 7);
   return (
     <div>
       <Navigation />
       <div className="sm:container center sm:mx-auto">
-        <nav
-          className="flex px-5 py-3 text-gray-700 border border-gray-200 rounded-lg bg-gray-50 dark:bg-gray-800 dark:border-gray-700"
-          aria-label="Breadcrumb"
-        >
-          <ol className="inline-flex items-center space-x-1 md:space-x-3">
-            <li className="inline-flex items-center"></li>
-            <li>
-              <div className="flex items-center">
-                <div className="ml-1 text-sm font-medium text-gray-700 hover:text-blue-600 md:ml-2 dark:text-gray-400 dark:hover:text-white">
-                  <Link href="/Patient/Doctor">Danh sách bác sĩ</Link>
+        <div className="mb-2 p-6 bg-white font-medium  border border-gray-200 rounded-lg shadow">
+          <nav
+            className="flex px-5 mb-2 py-3 text-gray-700 border border-gray-200 rounded-lg bg-gray-50 dark:bg-gray-800 dark:border-gray-700"
+            aria-label="Breadcrumb"
+          >
+            <ol className="inline-flex items-center space-x-1 md:space-x-3">
+              <li className="inline-flex items-center"></li>
+              <li>
+                <div className="flex items-center">
+                  <div className="ml-1 text-sm font-medium text-gray-700 hover:text-blue-600 md:ml-2 dark:text-gray-400 dark:hover:text-white">
+                    <Link href="/Patient/Doctor">Danh sách bác sĩ</Link>
+                  </div>
                 </div>
-              </div>
-            </li>
-            <li aria-current="page">
-              <div className="flex items-center">
-                <svg
-                  aria-hidden="true"
-                  className="w-6 h-6 text-gray-400"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                <span className="ml-1 text-sm font-medium text-gray-500 md:ml-2 dark:text-gray-400">
-                  Đặt lịch khám với bác sĩ {doctorInfo.name}
-                </span>
-              </div>
-            </li>
-          </ol>
-        </nav>
-        <FullCalendar
-          height="500px"
-          plugins={[timeGridPlugin, interactionPlugin]}
-          selectable={true}
-          initialView="timeGridWeek"
-          select={handleAppoinment}
-          dayMaxEvents={true}
-          validRange={{
-            // start: currentDate,
-            end: futureDate,
-          }}
-          events={events}
-          allDaySlot={false}
-          dayMaxEventRows={true}
-          slotDuration="00:30:00" // Set the slot duration to 30 minutes
-          slotLabelInterval="00:30" // Show slot labels every 1 hour
-          locale="vi"
-          slotMinTime="09:00:00"
-          slotMaxTime="17:00:00"
-          slotLabelFormat={{
-            hour: "numeric",
-            minute: "2-digit",
-            omitZeroMinute: false,
-          }}
-          headerToolbar={{
-            left: "prev,next today",
-            center: "title",
-            right: "timeGridWeek,timeGridDay",
-          }}
-          selectAllow={selectAllow}
-          eventContent={(eventInfo) => {
-            return (
-              <button type="button" onClick={() => handleAppoinment(eventInfo)}>
-                <p>
-                  {/* {eventInfo.event.title === "confirmed" &&
+              </li>
+              <li aria-current="page">
+                <div className="flex items-center">
+                  <svg
+                    aria-hidden="true"
+                    className="w-6 h-6 text-gray-400"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  <span className="ml-1 text-sm font-medium text-gray-500 md:ml-2 dark:text-gray-400">
+                    Đặt lịch khám với bác sĩ {doctorInfo.name}
+                  </span>
+                </div>
+              </li>
+            </ol>
+          </nav>
+          <StyleWrapper>
+            <FullCalendar
+              height="auto"
+              plugins={[timeGridPlugin, interactionPlugin]}
+              // selectable={true}
+              initialView="timeGridWeek"
+              select={handleAppoinment}
+              dayMaxEvents={true}
+              validRange={{
+                // start: startOfWeek,
+                end: endOfWeek,
+              }}
+              events={events}
+              selectConstraint={availableSlots}
+              allDaySlot={false}
+              dayMaxEventRows={true}
+              slotDuration="00:30:00" // Set the slot duration to 30 minutes
+              slotLabelInterval="00:30" // Show slot labels every 1 hour
+              locale="vi"
+              slotMinTime="09:00:00"
+              slotMaxTime="17:00:00"
+              slotLabelFormat={{
+                hour: "numeric",
+                minute: "2-digit",
+                omitZeroMinute: false,
+              }}
+              headerToolbar={{
+                left: "prev,next today",
+                center: "title",
+                right: "timeGridWeek,timeGridDay",
+              }}
+              buttonText={{
+                today: "Hôm nay",
+                week: "Tuần",
+                day: "Ngày",
+              }}
+              titleFormat={{
+                day: "numeric",
+                year: "numeric",
+                month: "long",
+              }}
+              // selectAllow={selectAllow}
+              eventContent={(eventInfo) => {
+                return (
+                  <button
+                    type="button"
+                    onClick={() => handleAppoinment(eventInfo)}
+                  >
+                    <p>
+                      {/* {eventInfo.event.title === "confirmed" &&
                   eventInfo.event.extendedProps.patientId === currentPatientId
                     ? "Đã đặt thành công"
                     : "Đã có người đặt"} */}
 
-                  {eventInfo.event.title === "pending" &&
-                  eventInfo.event.extendedProps.patientId === currentPatientId
-                    ? "Đang chờ"
-                    : eventInfo.event.title === "confirmed" &&
+                      {eventInfo.event.title === "pending" &&
                       eventInfo.event.extendedProps.patientId ===
                         currentPatientId
-                    ? "Đặt thành công"
-                    : eventInfo.event.title === "cancelled" &&
-                      eventInfo.event.extendedProps.patientId ===
-                        currentPatientId
-                    ? "Đã hủy"
-                    : eventInfo.event.title === "confirmed" &&
-                      eventInfo.event.extendedProps.patientId !==
-                        currentPatientId
-                    ? "Đã có người đặt"
-                    : eventInfo.event.title === "pending" &&
-                      eventInfo.event.extendedProps.patientId !==
-                        currentPatientId
-                    ? "Đã có người đặt"
-                    : eventInfo.event.title}
-                </p>
-              </button>
-            );
-          }}
-        />
-
+                        ? "Đang chờ"
+                        : eventInfo.event.title === "confirmed" &&
+                          eventInfo.event.extendedProps.patientId ===
+                            currentPatientId
+                        ? "Đặt thành công"
+                        : eventInfo.event.title === "cancelled" &&
+                          eventInfo.event.extendedProps.patientId ===
+                            currentPatientId
+                        ? "Đã hủy"
+                        : eventInfo.event.title === "confirmed" &&
+                          eventInfo.event.extendedProps.patientId !==
+                            currentPatientId
+                        ? "Đã có người đặt"
+                        : eventInfo.event.title === "pending" &&
+                          eventInfo.event.extendedProps.patientId !==
+                            currentPatientId
+                        ? "Đã có người đặt"
+                        : eventInfo.event.title != null
+                        ? "Đặt khám"
+                        : ""}
+                    </p>
+                  </button>
+                );
+              }}
+            />
+          </StyleWrapper>
+        </div>
         {showConfirmation && (
           <div
             style={{ zIndex: 9999 }}
@@ -323,6 +442,27 @@ const Appointment = () => {
                   <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
                     Thông tin đặt khám {selectedEvent?.status}
                   </h3>
+                  {selectedEvent.title === "confirmed" && (
+                    <>
+                      <span className="bg-blue-100 mt-1 ml-2 text-blue-800 text-sm font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-blue-900 dark:text-blue-300">
+                        Đặt thành công
+                      </span>
+                    </>
+                  )}
+                  {selectedEvent.title === "pending" && (
+                    <>
+                      <span className="bg-yellow-100 mt-1 ml-2 text-yellow-800 text-sm font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-yellow-900 dark:text-yellow-300">
+                        Đang chờ xác nhận
+                      </span>
+                    </>
+                  )}
+                  {selectedEvent.title === "cancelled" && (
+                    <>
+                      <span className="bg-red-100 mt-1 ml-2 text-red-800 text-sm font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-red-900 dark:text-red-300">
+                        Đã hủy
+                      </span>
+                    </>
+                  )}
                   <button
                     type="button"
                     className="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white"
@@ -344,111 +484,110 @@ const Appointment = () => {
                   </button>
                 </div>
                 {/* Modal body */}
-                <div className="p-6 ">
-                  <div className="p-6">
-                    <ul
-                      role="list"
-                      className="divide-y divide-gray-200 dark:divide-gray-700"
-                    >
-                      <li className="py-3 sm:py-4">
-                        <div className="flex items-center space-x-4">
-                          <div className="flex-shrink-0">
-                            <img
-                              className="w-8 h-8 rounded-full"
-                              src={doctorInfo.picture}
-                              alt="Neil image"
-                            />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate dark:text-white">
-                              Bác sĩ {doctorInfo.name}
-                            </p>
-                            <p className="text-sm text-gray-500 truncate dark:text-gray-400">
-                              {doctorInfo.contactNumber}
-                            </p>
-                          </div>
-                          <div className="inline-flex items-center text-base font-semibold text-gray-900 dark:text-white">
-                            <button
-                              type="button"
-                              onClick={handleToggleDrawerDoctor}
-                              className="py-2.5 px-5 mr-2 mb-2 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700"
-                            >
-                              Xem thông tin
-                            </button>
-                          </div>
-                        </div>
-                      </li>
-                      <li className="py-3 sm:py-4">
-                        <div className="flex items-center space-x-4">
-                          <div className="flex-shrink-0">
-                            <img
-                              className="w-8 h-8 rounded-full"
-                              src={patientInfo.picture}
-                              alt="Bonnie image"
-                            />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate dark:text-white">
-                              Bệnh nhân {patientInfo.name}
-                            </p>
-                            {patientInfo.fatherContact && (
-                              <p className="text-sm text-gray-500 truncate dark:text-gray-400">
-                                <span>Bố: {patientInfo.fatherContact}</span>
-                              </p>
-                            )}
-                            {patientInfo.motherContact && (
-                              <p className="text-sm text-gray-500 truncate dark:text-gray-400">
-                                <span>Mẹ: {patientInfo.motherContact}</span>
-                              </p>
-                            )}
-                          </div>
-                          <div className="inline-flex items-center text-base font-semibold text-gray-900 dark:text-white">
-                            <button
-                              type="button"
-                              onClick={handleToggleDrawerPatient}
-                              className="py-2.5 px-5 mr-2 mb-2 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700"
-                            >
-                              Xem thông tin
-                            </button>
-                          </div>
-                        </div>
-                      </li>
-                    </ul>
-                    {selectedEvent?.title === "pending" ||
-                    selectedEvent?.title === "confirmed" ||
-                    selectedEvent?.title === "cancelled" ? (
-                      <>
-                        <p className="text-base leading-relaxed text-black-500 dark:text-gray-400">
-                          Ngày khám:{" "}
-                          {selectedEvent &&
-                            new Date(selectedEvent.start).toLocaleDateString(
-                              "en-GB"
-                            )}
-                        </p>
 
-                        <p className="text-base leading-relaxed text-black-500 dark:text-gray-400">
-                          Khung giờ:{" "}
-                          {new Date(selectedEvent.start).toLocaleTimeString()} -{" "}
-                          {new Date(selectedEvent.end).toLocaleTimeString()}
-                        </p>
-                      </>
-                    ) : (
-                      <>
-                        <p className="text-base leading-relaxed text-black-500 dark:text-gray-400">
-                          Ngày khám:{" "}
-                          {new Date(selectedTime.start).toLocaleDateString(
+                <div className="p-6">
+                  <ul
+                    role="list"
+                    className="divide-y divide-gray-200 dark:divide-gray-700"
+                  >
+                    <li className="py-3 sm:py-4">
+                      <div className="flex items-center space-x-4">
+                        <div className="flex-shrink-0">
+                          <img
+                            className="w-8 h-8 rounded-full"
+                            src={doctorInfo.picture}
+                            alt="Neil image"
+                          />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 truncate dark:text-white">
+                            Bác sĩ {doctorInfo.name}
+                          </p>
+                          <p className="text-sm text-gray-500 truncate dark:text-gray-400">
+                            {doctorInfo.contactNumber}
+                          </p>
+                        </div>
+                        <div className="inline-flex items-center text-base font-semibold text-gray-900 dark:text-white">
+                          <button
+                            type="button"
+                            onClick={handleToggleDrawerDoctor}
+                            className="py-2.5 px-5 mr-2 mb-2 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700"
+                          >
+                            Xem thông tin
+                          </button>
+                        </div>
+                      </div>
+                    </li>
+                    <li className="py-3 sm:py-4">
+                      <div className="flex items-center space-x-4">
+                        <div className="flex-shrink-0">
+                          <img
+                            className="w-8 h-8 rounded-full"
+                            src={patientInfo.picture}
+                            alt="Bonnie image"
+                          />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 truncate dark:text-white">
+                            Bệnh nhân {patientInfo.name}
+                          </p>
+                          {patientInfo.fatherContact && (
+                            <p className="text-sm text-gray-500 truncate dark:text-gray-400">
+                              <span>Bố: {patientInfo.fatherContact}</span>
+                            </p>
+                          )}
+                          {patientInfo.motherContact && (
+                            <p className="text-sm text-gray-500 truncate dark:text-gray-400">
+                              <span>Mẹ: {patientInfo.motherContact}</span>
+                            </p>
+                          )}
+                        </div>
+                        <div className="inline-flex items-center text-base font-semibold text-gray-900 dark:text-white">
+                          <button
+                            type="button"
+                            onClick={handleToggleDrawerPatient}
+                            className="py-2.5 px-5 mr-2 mb-2 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700"
+                          >
+                            Xem thông tin
+                          </button>
+                        </div>
+                      </div>
+                    </li>
+                  </ul>
+                  {selectedEvent?.title === "pending" ||
+                  selectedEvent?.title === "confirmed" ||
+                  selectedEvent?.title === "cancelled" ? (
+                    <>
+                      <p className="text-base leading-relaxed text-black-500 dark:text-gray-400">
+                        Ngày khám:{" "}
+                        {selectedEvent &&
+                          new Date(selectedEvent.start).toLocaleDateString(
                             "en-GB"
                           )}
-                        </p>
+                      </p>
 
-                        <p className="text-base leading-relaxed text-black-500 dark:text-gray-400">
-                          Khung giờ:{" "}
-                          {new Date(selectedTime.start).toLocaleTimeString()} -{" "}
-                          {new Date(selectedTime.end).toLocaleTimeString()}
-                        </p>
-                      </>
-                    )}
-                  </div>
+                      <p className="text-base leading-relaxed text-black-500 dark:text-gray-400">
+                        Khung giờ:{" "}
+                        {new Date(selectedEvent?.start).toLocaleTimeString()} -{" "}
+                        {new Date(selectedEvent?.end).toLocaleTimeString()}
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-base leading-relaxed text-black-500 dark:text-gray-400">
+                        Ngày khám:{" "}
+                        {new Date(selectedTime?.start).toLocaleDateString(
+                          "en-GB"
+                        )}
+                      </p>
+
+                      <p className="text-base leading-relaxed text-black-500 dark:text-gray-400">
+                        Khung giờ:{" "}
+                        {new Date(selectedTime?.start).toLocaleTimeString()} -{" "}
+                        {new Date(selectedTime?.end).toLocaleTimeString()}
+                      </p>
+                    </>
+                  )}
                 </div>
 
                 {/* Modal footer */}
@@ -459,22 +598,48 @@ const Appointment = () => {
                 ) : (
                   <>
                     <div className="flex items-center p-6 space-x-2 border-t border-gray-200 rounded-b dark:border-gray-600">
-                      <button
-                        onClick={handleConfirmAppointment}
-                        data-modal-hide="staticModal"
-                        type="button"
-                        className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-                      >
-                        Đặt khám
-                      </button>
-                      <button
-                        onClick={handleCancelAppointment}
-                        data-modal-hide="staticModal"
-                        type="button"
-                        className="text-gray-500 bg-white hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-blue-300 rounded-lg border border-gray-200 text-sm font-medium px-5 py-2.5 hover:text-gray-900 focus:z-10 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-500 dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-gray-600"
-                      >
-                        Quay lại
-                      </button>
+                      {loading ? (
+                        <>
+                          <div>
+                            <svg
+                              aria-hidden="true"
+                              className="inline w-4 h-4 mr-2 text-gray-200 animate-spin dark:text-gray-600 fill-blue-600"
+                              viewBox="0 0 100 101"
+                              fill="none"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path
+                                d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
+                                fill="currentColor"
+                              />
+                              <path
+                                d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
+                                fill="currentFill"
+                              />
+                            </svg>
+                            <span className="sr-only">Loading...</span>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            onClick={handleConfirmAppointment}
+                            data-modal-hide="staticModal"
+                            type="button"
+                            className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                          >
+                            Đặt khám
+                          </button>
+                          <button
+                            onClick={handleCancelAppointment}
+                            data-modal-hide="staticModal"
+                            type="button"
+                            className="text-gray-500 bg-white hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-blue-300 rounded-lg border border-gray-200 text-sm font-medium px-5 py-2.5 hover:text-gray-900 focus:z-10 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-500 dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-gray-600"
+                          >
+                            Quay lại
+                          </button>
+                        </>
+                      )}
                     </div>
                   </>
                 )}

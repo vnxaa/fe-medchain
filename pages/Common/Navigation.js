@@ -2,6 +2,7 @@ import jwt_decode from "jwt-decode";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
+
 const Navigation = () => {
   const router = useRouter();
   const [role, setRole] = useState("");
@@ -52,8 +53,8 @@ const Navigation = () => {
 
   return (
     <nav
-      className="bg-white border-gray-200 dark:bg-gray-900 "
-      style={{ marginBottom: "50px" }}
+      className="bg-white mb-2 border-b border-gray-200 dark:bg-gray-900 "
+      // style={{ marginBottom: "50px" }}
     >
       <div className="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
         <a className="flex items-center">
