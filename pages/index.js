@@ -1,16 +1,26 @@
+import { faHeartbeat } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 export default function MedicalRecordHome() {
   return (
     <div>
       <nav className="bg-white dark:bg-gray-900 fixed w-full z-20 top-0 left-0 border-b border-gray-200 dark:border-gray-600">
         <div className="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
-          <a href="https://flowbite.com/" className="flex items-center">
-            <img
-              src="https://flowbite.com/docs/images/logo.svg"
-              className="h-8 mr-3"
-              alt="Flowbite Logo"
-            />
-            <span className="self-center text-2xl font-semibold whitespace-nowrap dark:text-white">
-              Medchain
+          <a href="#" className="flex items-center">
+            <div className="h-8 mr-1">
+              <div className="">
+                <div className="font-normal text-gray-500">
+                  <FontAwesomeIcon
+                    icon={faHeartbeat}
+                    size="2x"
+                    className="mr-2 text-blue-500"
+                  />
+                </div>
+              </div>
+            </div>
+            <span className="self-center  text-2xl font-bold whitespace-nowrap dark:text-white">
+              <span className="text-transparent bg-clip-text bg-gradient-to-bl  from-purple-600 to-blue-500 hover:bg-gradient-to-bl">
+                Medchain
+              </span>
             </span>
           </a>
           <div className="flex md:order-2">
@@ -94,7 +104,7 @@ export default function MedicalRecordHome() {
           style={{ marginTop: "100px" }}
         >
           <h1 className="mb-4 text-4xl font-extrabold tracking-tight leading-none text-gray-900 md:text-5xl lg:text-6xl dark:text-white">
-            <span className="text-transparent bg-clip-text bg-gradient-to-r to-emerald-600 from-sky-400">
+            <span className="text-transparent bg-clip-text   bg-gradient-to-bl from-purple-600 to-blue-500 hover:bg-gradient-to-r">
               Medchain
             </span>{" "}
             - Health{" "}

@@ -4,6 +4,7 @@ import React, { useEffect } from "react";
 import Navigation from "../Common/Navigation";
 const Dashboard = () => {
   const router = useRouter();
+
   useEffect(() => {
     // Get the token from localStorage
     const token = localStorage.getItem("token");
@@ -32,7 +33,7 @@ const Dashboard = () => {
 
       console.log("Token not found. Please log in.");
     }
-  }, []);
+  }, [router]);
 
   return (
     <div>

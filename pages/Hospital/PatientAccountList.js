@@ -1,27 +1,23 @@
 import axios from "axios";
 import jwt_decode from "jwt-decode";
 import Link from "next/link";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import Navigation from "../Common/Navigation";
-const StaffAccountList = () => {
-  const [accountRequests, setAccountRequests] = useState([]);
-  const [statusFilter, setStatusFilter] = useState("");
+const PatientAccountList = () => {
   const [showDrawer, setShowDrawer] = useState(false);
-  const [usernames, setUsernames] = useState([]);
-  const [generatedUsername, setGeneratedUsername] = useState("");
-  const [generatedPass, setGeneratedPass] = useState("");
-  const [selectedRecordName, setSelectedRecordName] = useState("");
-  const [selectedEmail, setSelectedEmail] = useState("");
-  const [selectedRecordPhoneNumber, setSelectedRecordPhoneNumber] =
-    useState("");
-  const [selectedRecordId, setSelectedRecordId] = useState("");
-  const [selectedRecordStatus, setSelectedRecordStatus] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [loadingRegister, setLoadingRegister] = useState(false);
-  const [successRegister, setSuccessRegister] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [accountsPerPage] = useState(5);
+  const [patients, setPatients] = useState([]);
+  const fetchPatients = async () => {
+    try {
+      const response = await axios.get(`${process.env.service}/api/patient/`);
+      const data = response.data;
+
+      setPatients(data);
+    } catch (error) {
+      console.error("Error fetching patients:", error);
+    }
+  };
   const handleToggleDrawer = (recordName, phoneNumber, status, email, id) => {
     setSelectedRecordName(recordName);
     setSelectedRecordPhoneNumber(phoneNumber);
@@ -39,154 +35,7 @@ const StaffAccountList = () => {
     setGeneratedUsername("");
     setGeneratedPass("");
   };
-  const filterRecords = (searchTerm) => {
-    setStatusFilter(searchTerm);
-  };
-  async function getAllUsernames() {
-    try {
-      const response = await axios.get(
-        `${process.env.service}/api/auth/usernames/`
-      );
-      const users = response.data;
-      const usernames = users.map((user) => user?.username);
-      setUsernames(usernames);
 
-      // Handle the usernames data as needed
-    } catch (error) {
-      console.error(error);
-      // Handle any errors that occurred during the request
-    }
-  }
-  function generateUniqueUsername(fullname, phoneNumber) {
-    // Remove whitespace and special characters from fullname
-    const cleanedFullname = fullname
-      .replace(/\s/g, "")
-      .replace(/[^a-zA-Z0-9]/g, "")
-      .toLowerCase();
-    // Extract the last 4 digits of the phoneNumber
-    const lastDigits = phoneNumber.slice(-4);
-
-    // Concatenate the cleanedFullname and lastDigits to generate the username
-    const username = `${cleanedFullname}${lastDigits}`;
-
-    // Check if the generated username is already in use
-    if (usernames.includes(username)) {
-      let uniqueUsername = username;
-      let counter = 1;
-
-      // Append a number to the username until a unique username is found
-      while (usernames.includes(uniqueUsername)) {
-        uniqueUsername = `${username}${counter}`;
-        counter++;
-      }
-
-      // Set the unique username
-      setGeneratedUsername(uniqueUsername);
-    } else {
-      // The generated username is available
-      setGeneratedUsername(username);
-    }
-  }
-  function generatePassword(length) {
-    const charset =
-      "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    let password = "";
-    for (let i = 0; i < length; i++) {
-      const randomIndex = Math.floor(Math.random() * charset.length);
-      password += charset[randomIndex];
-    }
-    return password;
-  }
-
-  const generateAccount = () => {
-    try {
-      setLoading(true);
-      getAllUsernames();
-      generateUniqueUsername(selectedRecordName, selectedRecordPhoneNumber);
-      setGeneratedPass(generatePassword(8));
-      setSuccess(true);
-    } catch (error) {
-      console.log(error);
-      setSuccess(false);
-    } finally {
-      setLoading(false);
-    }
-  };
-  const registerUser = async (username, password) => {
-    try {
-      setLoadingRegister(true);
-      const response = await axios.post(
-        `${process.env.service}/api/auth/register`,
-        {
-          username,
-          password,
-          role: "staff",
-          email: selectedEmail,
-          contactNumber: selectedRecordPhoneNumber,
-        }
-      );
-
-      const data = response.data;
-      console.log(data);
-      updateAccountRequestStatus(selectedRecordId, "approved");
-      // Handle the response data as needed
-      setSelectedRecordStatus((prevState) => ({
-        ...prevState,
-        status: "approved",
-      }));
-      setSuccessRegister(true);
-    } catch (error) {
-      console.error(error);
-      setSuccessRegister(false);
-      // Handle any errors that occurred during the request
-    } finally {
-      setLoadingRegister(false);
-    }
-  };
-  const updateAccountRequestStatus = async (accountId, status) => {
-    try {
-      const response = await axios.put(
-        `${process.env.service}/api/accountRequest/status/${accountId}`,
-        { status }
-      );
-      console.log("Account request status updated successfully");
-      setSelectedRecordStatus((prevState) => ({
-        ...prevState,
-        status: status,
-      }));
-      getAccountRequestsByRole();
-      // Handle the response data if needed
-    } catch (error) {
-      console.error(
-        "Failed to update account request status:",
-        error.response.data
-      );
-      // Handle the error if needed
-    }
-  };
-  const getAccountRequestsByRole = useCallback(async () => {
-    try {
-      const response = await axios.get(
-        `${process.env.service}/api/accountRequest/role/staff`
-      );
-      const allAccountRequests = response.data;
-      if (statusFilter.toLowerCase() === "all") {
-        setAccountRequests(allAccountRequests);
-      } else {
-        const accountRequestsFillter = allAccountRequests.filter((record) => {
-          const status = record.status.toLowerCase();
-          return status.includes(statusFilter.toLowerCase());
-        });
-        setAccountRequests(accountRequestsFillter);
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  }, [statusFilter]);
-
-  useEffect(() => {
-    getAccountRequestsByRole();
-  }, [statusFilter, getAccountRequestsByRole]);
   useEffect(() => {
     // Get the token from localStorage
     const token = localStorage.getItem("token");
@@ -215,26 +64,28 @@ const StaffAccountList = () => {
 
       console.log("Token not found. Please log in.");
     }
-    getAccountRequestsByRole();
+
+    fetchPatients();
   }, []);
 
   // Calculate total number of pages
-  const totalPages = Math.ceil(accountRequests.length / accountsPerPage);
+  const totalPages = Math.ceil(patients.length / accountsPerPage);
 
   // Get current accounts based on pagination
   const indexOfLastAccount = currentPage * accountsPerPage;
   const indexOfFirstAccount = indexOfLastAccount - accountsPerPage;
-  const currentAccounts = accountRequests.slice(
+  const currentAccounts = patients.slice(
     indexOfFirstAccount,
     indexOfLastAccount
   );
 
   // Update current page
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
   return (
     <div>
       <Navigation />
-      {/* {loadingaccountRequests ? <h1>load</h1> : <h1>ko load</h1>} */}
+
       <div className="sm:container center sm:mx-auto">
         <nav
           className="flex px-5 mb-2 py-3 text-gray-700 border border-gray-200 rounded-lg bg-gray-50 dark:bg-gray-800 dark:border-gray-700"
@@ -245,7 +96,7 @@ const StaffAccountList = () => {
             <li>
               <div className="flex items-center">
                 <div className="ml-1 text-sm font-medium text-gray-700 hover:text-blue-600 md:ml-2 dark:text-gray-400 dark:hover:text-white">
-                  <Link href="/Hospital/Staff">Nhân viên</Link>
+                  <Link href="/Hospital/Patient">Bệnh nhân</Link>
                 </div>
               </div>
             </li>
@@ -265,7 +116,7 @@ const StaffAccountList = () => {
                   />
                 </svg>
                 <span className="ml-1 text-sm font-medium text-gray-500 md:ml-2 dark:text-gray-400">
-                  Danh sách yêu cầu cấp tài khoản nhân viên
+                  Quản lý tài khoản bệnh nhân
                 </span>
               </div>
             </li>
@@ -275,19 +126,8 @@ const StaffAccountList = () => {
           <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
             <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
               <tr>
-                <th scope="col" className="p-6 py-3">
-                  <div className="relative">
-                    <select
-                      className="block p-2  text-sm text-gray-900 border border-gray-300 rounded-lg w-30 bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                      value={statusFilter}
-                      onChange={(e) => filterRecords(e.target.value)}
-                    >
-                      <option value="all">Tất cả</option>
-                      <option value="pending">Đang chờ</option>
-                      <option value="approved">Chấp nhận</option>
-                      <option value="rejected">Từ chối</option>
-                    </select>
-                  </div>
+                <th scope="col" className="px-6 py-3">
+                  Địa chỉ ví
                 </th>
                 <th scope="col" className="px-6 py-3">
                   Họ và tên
@@ -310,51 +150,51 @@ const StaffAccountList = () => {
                   key={index}
                   className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
                 >
-                  <td className="w-4 p-4">
-                    {record.status === "approved" && (
-                      <span className="bg-blue-100 text-blue-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-full dark:bg-blue-900 dark:text-blue-300">
-                        Chấp nhận
-                      </span>
+                  <td className="w-4 p-4">{record.walletAddress}</td>
+                  <td className="px-6 py-2">{record.name}</td>
+                  <td className="px-6 py-2">
+                    {" "}
+                    {record.fatherContact && (
+                      <p className="mt-1 text-sm  sm:mt-0 sm:col-span-2">
+                        <span>Bố: {record.fatherContact}</span>
+                      </p>
                     )}
-                    {record.status === "rejected" && (
-                      <span className="bg-red-100 text-red-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-full dark:bg-red-900 dark:text-red-300">
-                        Từ chối
-                      </span>
-                    )}
-                    {record.status === "pending" && (
-                      <span className="bg-yellow-100 text-yellow-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-full dark:bg-yellow-900 dark:text-yellow-300">
-                        Đang chờ
-                      </span>
+                    {record.motherContact && (
+                      <p className="mt-1 text-sm sm:mt-0 sm:col-span-2">
+                        <span>Mẹ: {record.motherContact}</span>
+                      </p>
                     )}
                   </td>
-                  <td className="px-6 py-2">{record.fullName}</td>
-                  <td className="px-6 py-2">{record.phoneNumber}</td>
                   <td className="px-6 py-4">{record.email}</td>
                   <td className="px-6 py-4">
-                    {new Date(record.createdAt).toLocaleDateString("en-GB", {
-                      day: "2-digit",
-                      month: "2-digit",
-                      year: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      hour12: true,
-                    })}
+                    {new Date(record.registrationDate).toLocaleDateString(
+                      "en-GB",
+                      {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        hour12: true,
+                      }
+                    )}
                   </td>
                   <td className="px-6 py-4">
-                    <button
-                      onClick={() =>
-                        handleToggleDrawer(
-                          record.fullName,
-                          record.phoneNumber,
-                          record.status,
-                          record.email,
-                          record._id
-                        )
-                      }
+                    <a
+                      href={`./PatientProfile/${record._id}`}
+                      //   onClick={() =>
+                      //     handleToggleDrawer(
+                      //       record.fullName,
+                      //       record.phoneNumber,
+                      //       record.status,
+                      //       record.email,
+                      //       record._id
+                      //     )
+                      //   }
                       className="font-medium text-blue-600 dark:text-blue-500 hover:underline"
                     >
                       Xem
-                    </button>
+                    </a>
                   </td>
                 </tr>
               ))}
@@ -445,7 +285,7 @@ const StaffAccountList = () => {
           </nav>
         </div>
       </div>
-      {showDrawer && (
+      {/* {showDrawer && (
         <div
           style={{ zIndex: 9999 }}
           className="fixed p-4 top-0 right-0 bottom-0 w-96 bg-white shadow-lg dark:bg-gray-800"
@@ -630,9 +470,9 @@ const StaffAccountList = () => {
             )}
           </div>
         </div>
-      )}
+      )} */}
     </div>
   );
 };
 
-export default StaffAccountList;
+export default PatientAccountList;

@@ -9,7 +9,10 @@ const MedicalRecord = () => {
   const [doctorInfo, setDoctorInfo] = useState([]);
   const [medicalRecords, setMedicalRecords] = useState([]);
   const [statusFilter, setStatusFilter] = useState("");
-
+  const [currentPage, setCurrentPage] = useState(1);
+  const [accountsPerPage] = useState(5);
+  const [currentMedicalRecords, setCurrentMedicalRecords] = useState([]);
+  const [totalPages, setTotalPages] = useState(0);
   const fetchMedicalRecords = useCallback(async () => {
     try {
       const response = await axios.get(
@@ -127,17 +130,56 @@ const MedicalRecord = () => {
     const age = currentYear - birthYear;
     return age;
   };
-  // if (!medicalRecords && patientInfo && doctorInfo) {
-  //   return <div>Loading...</div>; // Display a loading state while fetching data
-  // }
+
+  useEffect(() => {
+    // Calculate total number of pages
+    const newTotalPages = Math.ceil(medicalRecords.length / accountsPerPage);
+    setTotalPages(newTotalPages);
+
+    // Get current records based on pagination
+    const indexOfLast = currentPage * accountsPerPage;
+    const indexOfFirst = indexOfLast - accountsPerPage;
+    const newCurrentMedicalRecords = medicalRecords.slice(
+      indexOfFirst,
+      indexOfLast
+    );
+    setCurrentMedicalRecords(newCurrentMedicalRecords);
+  }, [medicalRecords, currentPage, accountsPerPage]);
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+  const filterSearch = (searchTerm) => {
+    const filteredRecords = medicalRecords.filter((record) => {
+      const patientName = patientInfo[record.patientId]?.name || "";
+      const doctorName = doctorInfo[record.doctorId]?.name || "";
+      return (
+        patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        doctorName.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    });
+
+    // Calculate total number of pages
+    const newTotalPages = Math.ceil(filteredRecords.length / accountsPerPage);
+    setTotalPages(newTotalPages);
+
+    // Get current records based on pagination
+    const indexOfLast = currentPage * accountsPerPage;
+    const indexOfFirst = indexOfLast - accountsPerPage;
+    const newCurrentMedicalRecords = filteredRecords.slice(
+      indexOfFirst,
+      indexOfLast
+    );
+    setCurrentMedicalRecords(newCurrentMedicalRecords);
+    setCurrentPage(1); // Reset to the first page after filtering
+  };
+
   return (
     <div>
       <Navigation />
       <div className="sm:container sm:mx-auto">
         <div className="relative overflow-x-auto shadow-md sm:rounded-lg">
-          <div className="flex items-center justify-between py-4 bg-white dark:bg-gray-800">
-            <div></div>
-            {/* <label htmlFor="table-search" className="sr-only">
+          <div className="flex items-center p-4 justify-between py-4 bg-white dark:bg-gray-800">
+            <div className="font-medium">Danh sách bệnh án</div>
+            <label htmlFor="table-search" className="sr-only">
               Search
             </label>
             <div className="relative">
@@ -161,29 +203,29 @@ const MedicalRecord = () => {
                 id="table-search-users"
                 className="block p-2 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg w-80 bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                 placeholder="Tìm bệnh án"
-                onChange={(e) => filterRecords(e.target.value)}
+                onChange={(e) => filterSearch(e.target.value)}
               />
-            </div> */}
-            <div className="relative">
-              <select
-                className="block p-2 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg w-40 bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                // value={statusFilter}
-                onChange={(e) => filterRecords(e.target.value)}
-              >
-                <option value="all">All</option>
-                <option value="minted">Minted</option>
-                <option value="draft">Draft</option>
-                <option value="reject">Reject</option>
-              </select>
             </div>
           </div>
 
           <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-            <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+            <thead className="text-xs  text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
               <tr>
-                <th scope="col" className="p-4">
-                  <div className="flex items-center"></div>
+                <th scope="col" className="p-6 py-3">
+                  <div className="relative">
+                    <select
+                      className="block p-2  text-sm text-gray-900 border border-gray-300 rounded-lg w-30 bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                      value={statusFilter}
+                      onChange={(e) => filterRecords(e.target.value)}
+                    >
+                      <option value="all">Tất cả</option>
+                      <option value="minted">NFT</option>
+                      <option value="draft">Bản nháp</option>
+                      <option value="reject">Từ chối</option>
+                    </select>
+                  </div>
                 </th>
+
                 <th scope="col" className="px-12 py-3">
                   Bệnh nhân
                 </th>
@@ -197,12 +239,35 @@ const MedicalRecord = () => {
               </tr>
             </thead>
             <tbody>
-              {medicalRecords.map((record, index) => (
+              {currentMedicalRecords.map((record, index) => (
                 <tr
                   key={index}
                   className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
                 >
-                  <td className="w-4 p-4"></td>
+                  <td className="w-4 p-12">
+                    {record.status === "minted" && (
+                      <>
+                        <span className="bg-blue-100 text-blue-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-full dark:bg-blue-900 dark:text-blue-300">
+                          NFT
+                        </span>
+                      </>
+                    )}
+                    {record.status === "reject" && (
+                      <>
+                        <span className="whitespace-nowrap bg-red-100 text-red-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-full dark:bg-red-900 dark:text-red-300">
+                          Từ chối
+                        </span>
+                      </>
+                    )}
+                    {record.status === "draft" && (
+                      <>
+                        <span className="bg-gray-100 text-gray-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-full dark:bg-red-900 dark:text-red-300">
+                          Nháp
+                        </span>
+                      </>
+                    )}
+                  </td>
+
                   <td className="px-6 py-2">
                     {patientInfo[record.patientId]?.picture ? (
                       <div
@@ -312,6 +377,89 @@ const MedicalRecord = () => {
               ))}
             </tbody>
           </table>
+          <nav aria-label="Page navigation example">
+            <ul className="flex items-center -space-x-px h-10 text-base">
+              <li>
+                <button
+                  className={`block px-4 h-10 ml-0 leading-tight text-gray-500 bg-white border border-gray-300 rounded-l-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white ${
+                    currentPage === 1 ? "cursor-not-allowed opacity-50" : ""
+                  }`}
+                  onClick={() => {
+                    if (currentPage !== 1) {
+                      paginate(currentPage - 1);
+                    }
+                  }}
+                  disabled={currentPage === 1}
+                >
+                  <span className="sr-only">Previous</span>
+                  <svg
+                    className="w-3 h-3"
+                    aria-hidden="true"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 6 10"
+                  >
+                    <path
+                      stroke="currentColor"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 1 1 5l4 4"
+                    />
+                  </svg>
+                </button>
+              </li>
+              {Array.from(Array(totalPages), (e, i) => {
+                const pageNumber = i + 1;
+                return (
+                  <li key={i}>
+                    <button
+                      className={`${
+                        pageNumber === currentPage
+                          ? "z-10 flex items-center justify-center px-4 h-10 leading-tight text-blue-600 border border-blue-300 bg-blue-50 hover:bg-blue-100 hover:text-blue-700 dark:border-gray-700 dark:bg-gray-700 dark:text-white"
+                          : "flex items-center justify-center px-4 h-10 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
+                      }`}
+                      onClick={() => paginate(pageNumber)}
+                    >
+                      {pageNumber}
+                    </button>
+                  </li>
+                );
+              })}
+              <li>
+                <button
+                  className={`block px-4 h-10 mr-0 leading-tight text-gray-500 bg-white border border-gray-300 rounded-r-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white ${
+                    currentPage === totalPages
+                      ? "cursor-not-allowed opacity-50"
+                      : ""
+                  }`}
+                  onClick={() => {
+                    if (currentPage !== totalPages) {
+                      paginate(currentPage + 1);
+                    }
+                  }}
+                  disabled={currentPage === totalPages}
+                >
+                  <span className="sr-only">Next</span>
+                  <svg
+                    className="w-3 h-3"
+                    aria-hidden="true"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 6 10"
+                  >
+                    <path
+                      stroke="currentColor"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="m1 9 4-4-4-4"
+                    />
+                  </svg>
+                </button>
+              </li>
+            </ul>
+          </nav>
         </div>
       </div>
     </div>

@@ -107,7 +107,7 @@ const Staff = () => {
                       Tra cứu thông tin cá nhân của nhân viên trong hệ thống.
                     </p>
                     <a
-                      href="./DoctorList"
+                      href="./StaffList"
                       className="mt-3 text-indigo-500 inline-flex items-center"
                     >
                       Tra cứu

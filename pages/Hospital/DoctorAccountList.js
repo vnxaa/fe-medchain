@@ -27,7 +27,9 @@ const DoctorAccountList = () => {
   const [success, setSuccess] = useState(false);
   const [loadingRegister, setLoadingRegister] = useState(false);
   const [successRegister, setSuccessRegister] = useState(false);
+
   const router = useRouter();
+
   const handleToggleDrawer = (recordName, phoneNumber, status, email, id) => {
     setSelectedRecordName(recordName);
     setSelectedRecordPhoneNumber(phoneNumber);
@@ -226,12 +228,12 @@ const DoctorAccountList = () => {
   }, [statusFilter, getAccountRequestsByRole]);
 
   // Calculate total number of pages
-  const totalPages = Math.ceil(doctors.length / accountsPerPage);
+  const totalPages = Math.ceil(accountRequests.length / accountsPerPage);
 
   // Get current accounts based on pagination
   const indexOfLastAccount = currentPage * accountsPerPage;
   const indexOfFirstAccount = indexOfLastAccount - accountsPerPage;
-  const currentAccounts = doctors.slice(
+  const currentAccounts = accountRequests.slice(
     indexOfFirstAccount,
     indexOfLastAccount
   );
@@ -244,7 +246,7 @@ const DoctorAccountList = () => {
       <Navigation />
       <div className="sm:container sm:mx-auto">
         <nav
-          className="flex px-5 py-3 text-gray-700 border border-gray-200 rounded-lg bg-gray-50 dark:bg-gray-800 dark:border-gray-700"
+          className="flex px-5 mb-2 py-3 text-gray-700 border border-gray-200 rounded-lg bg-gray-50 dark:bg-gray-800 dark:border-gray-700"
           aria-label="Breadcrumb"
         >
           <ol className="inline-flex items-center space-x-1 md:space-x-3">
@@ -278,94 +280,179 @@ const DoctorAccountList = () => {
             </li>
           </ol>
         </nav>
-        <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-          <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-            <tr>
-              <th scope="col" className="p-6 py-3">
-                <div className="relative">
-                  <select
-                    className="block p-2  text-sm text-gray-900 border border-gray-300 rounded-lg w-30 bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                    value={statusFilter}
-                    onChange={(e) => filterRecords(e.target.value)}
-                  >
-                    <option value="all">Tất cả</option>
-                    <option value="pending">Đang chờ</option>
-                    <option value="approved">Chấp nhận</option>
-                    <option value="rejected">Từ chối</option>
-                  </select>
-                </div>
-              </th>
-              <th scope="col" className="px-6 py-3">
-                Họ và tên
-              </th>
-              <th scope="col" className="px-6 py-5">
-                Số điện thoại
-              </th>
-              <th scope="col" className="px-6 py-3">
-                Email
-              </th>
-              <th scope="col" className="px-6 py-3">
-                Ngày tạo
-              </th>
-              <th scope="col" className="px-6 py-3"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {accountRequests.map((record, index) => (
-              <tr
-                key={index}
-                className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
-              >
-                <td className="w-4 p-4">
-                  {record.status === "approved" && (
-                    <span className="bg-blue-100 text-blue-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-full dark:bg-blue-900 dark:text-blue-300">
-                      Chấp nhận
-                    </span>
-                  )}
-                  {record.status === "rejected" && (
-                    <span className="bg-red-100 text-red-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-full dark:bg-red-900 dark:text-red-300">
-                      Từ chối
-                    </span>
-                  )}
-                  {record.status === "pending" && (
-                    <span className="bg-yellow-100 text-yellow-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-full dark:bg-yellow-900 dark:text-yellow-300">
-                      Đang chờ
-                    </span>
-                  )}
-                </td>
-                <td className="px-6 py-2">{record.fullName}</td>
-                <td className="px-6 py-2">{record.phoneNumber}</td>
-                <td className="px-6 py-4">{record.email}</td>
-                <td className="px-6 py-4">
-                  {new Date(record.createdAt).toLocaleDateString("en-GB", {
-                    day: "2-digit",
-                    month: "2-digit",
-                    year: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    hour12: true,
-                  })}
-                </td>
-                <td className="px-6 py-4">
-                  <button
-                    onClick={() =>
-                      handleToggleDrawer(
-                        record.fullName,
-                        record.phoneNumber,
-                        record.status,
-                        record.email,
-                        record._id
-                      )
-                    }
-                    className="font-medium text-blue-600 dark:text-blue-500 hover:underline"
-                  >
-                    Xem
-                  </button>
-                </td>
+        <div className="relative overflow-x-auto shadow-md sm:rounded-lg">
+          <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+            <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+              <tr>
+                <th scope="col" className="p-6 py-3">
+                  <div className="relative">
+                    <select
+                      className="block p-2  text-sm text-gray-900 border border-gray-300 rounded-lg w-30 bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                      value={statusFilter}
+                      onChange={(e) => filterRecords(e.target.value)}
+                    >
+                      <option value="all">Tất cả</option>
+                      <option value="pending">Đang chờ</option>
+                      <option value="approved">Chấp nhận</option>
+                      <option value="rejected">Từ chối</option>
+                    </select>
+                  </div>
+                </th>
+                <th scope="col" className="px-6 py-3">
+                  Họ và tên
+                </th>
+                <th scope="col" className="px-6 py-5">
+                  Số điện thoại
+                </th>
+                <th scope="col" className="px-6 py-3">
+                  Email
+                </th>
+                <th scope="col" className="px-6 py-3">
+                  Ngày tạo
+                </th>
+                <th scope="col" className="px-6 py-3"></th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {currentAccounts.map((record, index) => (
+                <tr
+                  key={index}
+                  className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
+                >
+                  <td className="w-4 p-4">
+                    {record.status === "approved" && (
+                      <span className="bg-blue-100 text-blue-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-full dark:bg-blue-900 dark:text-blue-300">
+                        Chấp nhận
+                      </span>
+                    )}
+                    {record.status === "rejected" && (
+                      <span className="bg-red-100 text-red-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-full dark:bg-red-900 dark:text-red-300">
+                        Từ chối
+                      </span>
+                    )}
+                    {record.status === "pending" && (
+                      <span className="bg-yellow-100 text-yellow-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-full dark:bg-yellow-900 dark:text-yellow-300">
+                        Đang chờ
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-6 py-2">{record.fullName}</td>
+                  <td className="px-6 py-2">{record.phoneNumber}</td>
+                  <td className="px-6 py-4">{record.email}</td>
+                  <td className="px-6 py-4">
+                    {new Date(record.createdAt).toLocaleDateString("en-GB", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      hour12: true,
+                    })}
+                  </td>
+                  <td className="px-6 py-4">
+                    <button
+                      onClick={() =>
+                        handleToggleDrawer(
+                          record.fullName,
+                          record.phoneNumber,
+                          record.status,
+                          record.email,
+                          record._id
+                        )
+                      }
+                      className="font-medium text-blue-600 dark:text-blue-500 hover:underline"
+                    >
+                      Xem
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <nav aria-label="Page navigation example">
+            <ul className="flex items-center -space-x-px h-10 text-base">
+              <li>
+                <button
+                  className={`block px-4 h-10 ml-0 leading-tight text-gray-500 bg-white border border-gray-300 rounded-l-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white ${
+                    currentPage === 1 ? "cursor-not-allowed opacity-50" : ""
+                  }`}
+                  onClick={() => {
+                    if (currentPage !== 1) {
+                      paginate(currentPage - 1);
+                    }
+                  }}
+                  disabled={currentPage === 1}
+                >
+                  <span className="sr-only">Previous</span>
+                  <svg
+                    className="w-3 h-3"
+                    aria-hidden="true"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 6 10"
+                  >
+                    <path
+                      stroke="currentColor"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 1 1 5l4 4"
+                    />
+                  </svg>
+                </button>
+              </li>
+              {Array.from(Array(totalPages), (e, i) => {
+                const pageNumber = i + 1;
+                return (
+                  <li key={i}>
+                    <button
+                      className={`${
+                        pageNumber === currentPage
+                          ? "z-10 flex items-center justify-center px-4 h-10 leading-tight text-blue-600 border border-blue-300 bg-blue-50 hover:bg-blue-100 hover:text-blue-700 dark:border-gray-700 dark:bg-gray-700 dark:text-white"
+                          : "flex items-center justify-center px-4 h-10 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
+                      }`}
+                      onClick={() => paginate(pageNumber)}
+                    >
+                      {pageNumber}
+                    </button>
+                  </li>
+                );
+              })}
+              <li>
+                <button
+                  className={`block px-4 h-10 mr-0 leading-tight text-gray-500 bg-white border border-gray-300 rounded-r-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white ${
+                    currentPage === totalPages
+                      ? "cursor-not-allowed opacity-50"
+                      : ""
+                  }`}
+                  onClick={() => {
+                    if (currentPage !== totalPages) {
+                      paginate(currentPage + 1);
+                    }
+                  }}
+                  disabled={currentPage === totalPages}
+                >
+                  <span className="sr-only">Next</span>
+                  <svg
+                    className="w-3 h-3"
+                    aria-hidden="true"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 6 10"
+                  >
+                    <path
+                      stroke="currentColor"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="m1 9 4-4-4-4"
+                    />
+                  </svg>
+                </button>
+              </li>
+            </ul>
+          </nav>
+        </div>
       </div>
       {showDrawer && (
         <div

@@ -194,7 +194,11 @@ const Appointment = () => {
         `${process.env.service}/api/events/patient/${doctorId}/${patientId}`
       );
       const { availableSlots, appointments } = response.data;
+      const currentTime = new Date(); // Get the current time
 
+      const filteredAvailableSlots = availableSlots.filter(
+        (slot) => new Date(slot?.startTime) > currentTime // Filter slots that are greater than the current time
+      );
       const events = [
         ...appointments.map((appointment) => ({
           appointmentId: appointment?._id,
@@ -204,7 +208,7 @@ const Appointment = () => {
           patientId: appointment?.patient,
           color: statusColors[appointment?.status],
         })),
-        ...availableSlots.map((slot) => ({
+        ...filteredAvailableSlots.map((slot) => ({
           title: "Available",
           start: slot?.startTime,
           end: slot?.endTime,

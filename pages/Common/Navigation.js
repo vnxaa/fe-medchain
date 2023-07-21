@@ -1,8 +1,9 @@
+import { faHeartbeat } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import jwt_decode from "jwt-decode";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
-
 const Navigation = () => {
   const router = useRouter();
   const [role, setRole] = useState("");
@@ -29,6 +30,9 @@ const Navigation = () => {
       } else if (decodedToken?.hospital) {
         setRole("hospital");
         userInfo(decodedToken?.hospital);
+      } else if (decodedToken?.user?.role === "staff") {
+        setRole("staff");
+        userInfo(decodedToken?.user);
       }
     }
   }, []);
@@ -53,14 +57,26 @@ const Navigation = () => {
 
   return (
     <nav
-      className="bg-white mb-2 border-b border-gray-200 dark:bg-gray-900 "
+      className="bg-white mb-2 border-b border-gray-200 dark:bg-gray-900"
       // style={{ marginBottom: "50px" }}
     >
       <div className="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
-        <a className="flex items-center">
-          <div className="h-8 mr-3"></div>
-          <span className="self-center text-2xl font-semibold whitespace-nowrap dark:text-white">
-            Medchain
+        <a href="#" className="flex items-center">
+          <div className="h-8 mr-1">
+            <div className="">
+              <div className="font-normal text-gray-500">
+                <FontAwesomeIcon
+                  icon={faHeartbeat}
+                  size="2x"
+                  className="mr-2 text-blue-500"
+                />
+              </div>
+            </div>
+          </div>
+          <span className="self-center  text-2xl font-bold whitespace-nowrap dark:text-white">
+            <span className="text-transparent bg-clip-text bg-gradient-to-bl from-purple-600 to-blue-500 hover:bg-gradient-to-bl">
+              Medchain
+            </span>
           </span>
         </a>
         <div className="flex items-center md:order-2">
@@ -84,9 +100,15 @@ const Navigation = () => {
             />
           </button>
           {/* Dropdown menu */}
+
           <div
-            className="z-50  hidden my-4 text-base list-none bg-white absolute divide-y divide-gray-100 rounded-lg shadow dark:bg-gray-700 dark:divide-gray-600"
-            style={{ marginTop: "250px" }}
+            className="z-10 hidden bg-white divide-y divide-gray-100 rounded-lg shadow w-44 dark:bg-gray-700 dark:divide-gray-600"
+            style={{
+              position: "absolute",
+              inset: "0px auto auto 0px",
+              margin: "0px",
+              transform: "translate(1440px, 58px)",
+            }}
             id="user-dropdown"
           >
             <div className="px-4 py-3">
@@ -109,10 +131,12 @@ const Navigation = () => {
                   href={
                     role === "doctor"
                       ? "/Doctor/Profile"
-                      : role === "Profile"
-                      ? "/Hospital/Settings"
+                      : role === "hospital"
+                      ? "/Hospital/Profile"
                       : role === "patient"
                       ? "/Patient/Profile"
+                      : role === "staff"
+                      ? "/Staff/Profile"
                       : ""
                   }
                   className={`block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white ${
@@ -133,6 +157,8 @@ const Navigation = () => {
                       ? "/Hospital/Settings"
                       : role === "patient"
                       ? "/Patient/Settings"
+                      : role === "staff"
+                      ? "/Staff/Settings"
                       : ""
                   }
                   className={`block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white ${
@@ -426,6 +452,49 @@ const Navigation = () => {
                       }
                     >
                       Bác sĩ
+                    </Link>
+                  </div>
+                </li>
+              </>
+            )}
+            {role === "staff" && (
+              <>
+                <li>
+                  <div
+                    className={`block py-2 pl-3 pr-4 ${
+                      router.pathname === "/Staff/Dashboard"
+                        ? "text-white bg-blue-700 rounded md:bg-transparent md:text-blue-700 md:p-0 md:dark:text-blue-500"
+                        : "text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 dark:text-white md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent dark:border-gray-700"
+                    }`}
+                  >
+                    <Link
+                      href="/Staff/Dashboard"
+                      aria-current={
+                        router.pathname === "/Staff/Dashboard"
+                          ? "page"
+                          : undefined
+                      }
+                    >
+                      Dashboard
+                    </Link>
+                  </div>
+                </li>
+
+                <li>
+                  <div
+                    className={`block py-2 pl-3 pr-4 ${
+                      router.pathname === "/Staff/Doctor"
+                        ? "text-white bg-blue-700 rounded md:bg-transparent md:text-blue-700 md:p-0 md:dark:text-blue-500"
+                        : "text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 dark:text-white md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent dark:border-gray-700"
+                    }`}
+                  >
+                    <Link
+                      href="/Staff/Doctor"
+                      aria-current={
+                        router.pathname === "/Staff/Doctor" ? "page" : undefined
+                      }
+                    >
+                      Lịch khám bác sĩ
                     </Link>
                   </div>
                 </li>

@@ -1,5 +1,3 @@
-import { faHeartbeat } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import axios from "axios";
 import jwt_decode from "jwt-decode";
 import { useRouter } from "next/router";
@@ -9,7 +7,8 @@ const MedicalRecord = () => {
   const router = useRouter();
   const [nfts, setNFTs] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-
+  const [currentPage, setCurrentPage] = useState(1);
+  const [accountsPerPage] = useState(5);
   const fetchNFTs = async (address) => {
     try {
       setIsLoading(true);
@@ -55,15 +54,23 @@ const MedicalRecord = () => {
 
     // fetchNFTs(address);
   }, [router]);
+  // Calculate total number of pages
+  const totalPages = Math.ceil(nfts.length / accountsPerPage);
 
+  // Get current accounts based on pagination
+  const indexOfLast = currentPage * accountsPerPage;
+  const indexOfFirst = indexOfLast - accountsPerPage;
+  const currentNfts = nfts.slice(indexOfFirst, indexOfLast);
+  // Update current page
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
   return (
     <div>
       <Navigation />
       <div className="sm:container sm:mx-auto">
         <div className="relative overflow-x-auto shadow-md sm:rounded-lg">
-          <div className="flex items-center justify-between py-4 bg-white dark:bg-gray-800">
-            <div></div>
-            <label htmlFor="table-search" className="sr-only">
+          <div className="flex p-4 items-center justify-between py-4 bg-white dark:bg-gray-800">
+            <div className="font-medium">Danh sách bệnh án</div>
+            {/* <label htmlFor="table-search" className="sr-only">
               Search
             </label>
             <div className="relative">
@@ -88,7 +95,7 @@ const MedicalRecord = () => {
                 className="block p-2 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg w-80 bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                 placeholder="Tìm bệnh án"
               />
-            </div>
+            </div> */}
           </div>
           {isLoading && (
             <div>
@@ -117,11 +124,11 @@ const MedicalRecord = () => {
                 <th scope="col" className="p-4">
                   <div className="flex items-center"></div>
                 </th>
-                <th scope="col" className="px-9 py-3">
+                <th scope="col" className="px-3 py-3">
                   NFT bệnh án
                 </th>
                 <th scope="col" className="px-9 py-5">
-                  Mã hash
+                  Mã hash giao dịch
                 </th>
                 <th scope="col" className="px-6 py-3">
                   Ngày tạo
@@ -130,22 +137,16 @@ const MedicalRecord = () => {
               </tr>
             </thead>
             <tbody>
-              {nfts.map((record, index) => (
+              {currentNfts.map((record, index) => (
                 <tr
                   key={index}
                   className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
                 >
                   <td className="w-4 p-4"></td>
-                  <td className="px-6 py-2">
-                    <div className="pl-3">
-                      <div className="font-normal text-gray-500">
-                        <FontAwesomeIcon
-                          icon={faHeartbeat}
-                          size="2x"
-                          className="mr-2 text-red-500"
-                        />
-                      </div>
-                    </div>
+                  <td className="px-6 p-7">
+                    <span className="bg-blue-100 text-blue-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-full dark:bg-blue-900 dark:text-blue-300">
+                      NFT
+                    </span>
                   </td>
                   <td className="px-6 py-2">
                     <div className="pl-3">
@@ -179,6 +180,89 @@ const MedicalRecord = () => {
               ))}
             </tbody>
           </table>
+          <nav aria-label="Page navigation example">
+            <ul className="flex items-center -space-x-px h-10 text-base">
+              <li>
+                <button
+                  className={`block px-4 h-10 ml-0 leading-tight text-gray-500 bg-white border border-gray-300 rounded-l-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white ${
+                    currentPage === 1 ? "cursor-not-allowed opacity-50" : ""
+                  }`}
+                  onClick={() => {
+                    if (currentPage !== 1) {
+                      paginate(currentPage - 1);
+                    }
+                  }}
+                  disabled={currentPage === 1}
+                >
+                  <span className="sr-only">Previous</span>
+                  <svg
+                    className="w-3 h-3"
+                    aria-hidden="true"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 6 10"
+                  >
+                    <path
+                      stroke="currentColor"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 1 1 5l4 4"
+                    />
+                  </svg>
+                </button>
+              </li>
+              {Array.from(Array(totalPages), (e, i) => {
+                const pageNumber = i + 1;
+                return (
+                  <li key={i}>
+                    <button
+                      className={`${
+                        pageNumber === currentPage
+                          ? "z-10 flex items-center justify-center px-4 h-10 leading-tight text-blue-600 border border-blue-300 bg-blue-50 hover:bg-blue-100 hover:text-blue-700 dark:border-gray-700 dark:bg-gray-700 dark:text-white"
+                          : "flex items-center justify-center px-4 h-10 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
+                      }`}
+                      onClick={() => paginate(pageNumber)}
+                    >
+                      {pageNumber}
+                    </button>
+                  </li>
+                );
+              })}
+              <li>
+                <button
+                  className={`block px-4 h-10 mr-0 leading-tight text-gray-500 bg-white border border-gray-300 rounded-r-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white ${
+                    currentPage === totalPages
+                      ? "cursor-not-allowed opacity-50"
+                      : ""
+                  }`}
+                  onClick={() => {
+                    if (currentPage !== totalPages) {
+                      paginate(currentPage + 1);
+                    }
+                  }}
+                  disabled={currentPage === totalPages}
+                >
+                  <span className="sr-only">Next</span>
+                  <svg
+                    className="w-3 h-3"
+                    aria-hidden="true"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 6 10"
+                  >
+                    <path
+                      stroke="currentColor"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="m1 9 4-4-4-4"
+                    />
+                  </svg>
+                </button>
+              </li>
+            </ul>
+          </nav>
         </div>
       </div>
     </div>

@@ -13,15 +13,15 @@ const Dashboard = () => {
       try {
         // Decode the token
         const decoded = jwt_decode(token);
-        console.log(decoded);
 
         // Check if the user is a patient
-        if (decoded.patient) {
+        if (decoded.user.role == "staff") {
           // User is a patient, allow access to the patient page
-          console.log("Access granted to patient page");
+          console.log("Access granted to staff page");
         } else {
+          router.push("/Staff/LoginPage");
           // User is not a patient, redirect to another page or show an error message
-          console.log("Access denied. User is not a patient");
+          console.log("Access denied. User is not a staff");
         }
       } catch (error) {
         // Handle decoding error
@@ -29,7 +29,7 @@ const Dashboard = () => {
       }
     } else {
       // Token not found, redirect to login page or show an error message
-      router.push("/Patient/LoginPage");
+      router.push("/Staff/LoginPage");
 
       console.log("Token not found. Please log in.");
     }
@@ -38,8 +38,9 @@ const Dashboard = () => {
   return (
     <div>
       <Navigation />
-      <h1>Dashboard Page</h1>
-      {/* Add your page content here */}
+      <div className="sm:container sm:mx-auto">
+        <p>Dashboard page</p>
+      </div>
     </div>
   );
 };

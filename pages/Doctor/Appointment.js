@@ -18,13 +18,13 @@ export const StyleWrapper = styled.div`
     background: #f1f5f8;
   }
 
-  :root {
-    --fc-today-bg-color: black;
-  }
   .fc-timegrid-slot-lane {
     height: 40px;
   }
 `;
+// export const RootWrapper = styled.div`
+//   --fc-button-hover-bg-color: red;
+// `;
 const Appointment = () => {
   const router = useRouter();
   const [doctorInfo, setDoctorInfo] = useState("");
@@ -162,7 +162,11 @@ const Appointment = () => {
         `${process.env.service}/api/events/doctor/${doctorId}`
       );
       const { availableSlots, appointments } = response.data;
+      const currentTime = new Date(); // Get the current time
 
+      const filteredAvailableSlots = availableSlots.filter(
+        (slot) => new Date(slot?.startTime) > currentTime // Filter slots that are greater than the current time
+      );
       const events = [
         ...appointments.map((appointment) => ({
           appointmentId: appointment?._id,
@@ -172,7 +176,7 @@ const Appointment = () => {
           patientId: appointment?.patient,
           color: statusColors[appointment?.status],
         })),
-        ...availableSlots.map((slot) => ({
+        ...filteredAvailableSlots.map((slot) => ({
           title: "Available",
           start: slot?.startTime,
           end: slot?.endTime,
@@ -329,6 +333,8 @@ const Appointment = () => {
       <Navigation />
       <div className="sm:container center sm:mx-auto">
         <div className=" p-6 bg-white font-medium mt-5 border border-gray-200 rounded-lg shadow">
+          {/* <RootWrapper>
+          </RootWrapper> */}
           <StyleWrapper>
             <FullCalendar
               height="auto"

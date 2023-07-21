@@ -1,42 +1,25 @@
 import axios from "axios";
 import jwt_decode from "jwt-decode";
+import Link from "next/link";
 import { useRouter } from "next/router";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import Navigation from "../Common/Navigation";
-const MedicalRecord = () => {
+const PatientList = () => {
   const router = useRouter();
-  const [patientInfo, setPatientInfo] = useState([]);
-  const [doctorInfo, setDoctorInfo] = useState([]);
-  const [medicalRecords, setMedicalRecords] = useState([]);
-  const [statusFilter, setStatusFilter] = useState("");
+  const [patients, setPatients] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [accountsPerPage] = useState(5);
-  const fetchMedicalRecords = useCallback(async () => {
+  const [searchTerm, setSearchTerm] = useState("");
+  const fetchPatients = async () => {
     try {
-      const response = await axios.get(
-        `${process.env.service}/api/medicalRecord`
-      );
-      const allRecords = response.data;
-      if (statusFilter.toLowerCase() === "all") {
-        setMedicalRecords(allRecords);
-      } else {
-        const filteredRecords = allRecords.filter((record) => {
-          const status = record.status.toLowerCase();
-          return status.includes(statusFilter.toLowerCase());
-        });
+      const response = await axios.get(`${process.env.service}/api/patient/`);
+      const data = response.data;
 
-        setMedicalRecords(filteredRecords);
-      }
+      setPatients(data);
     } catch (error) {
-      console.error("Failed to fetch medical records:", error);
+      console.error("Error fetching patients:", error);
     }
-  }, [statusFilter]);
-  const filterRecords = (searchTerm) => {
-    setStatusFilter(searchTerm);
   };
-  useEffect(() => {
-    fetchMedicalRecords();
-  }, [statusFilter, fetchMedicalRecords]);
   useEffect(() => {
     // Get the token from localStorage
     const token = localStorage.getItem("token");
@@ -47,13 +30,13 @@ const MedicalRecord = () => {
         const decoded = jwt_decode(token);
         console.log(decoded);
 
-        // Check if the user is a doctor
-        if (decoded?.user?.role === "doctor") {
-          // User is a doctor, allow access to the doctor page
-          console.log("Access granted to doctor page");
+        // Check if the user is a hospital
+        if (decoded.hospital) {
+          // User is a hospital, allow access to the hospital page
+          console.log("Access granted to hospital page");
         } else {
-          // User is not a doctor, redirect to another page or show an error message
-          console.log("Access denied. User is not a doctor");
+          // User is not a hospital, redirect to another page or show an error message
+          console.log("Access denied. User is not a hospital");
         }
       } catch (error) {
         // Handle decoding error
@@ -61,84 +44,82 @@ const MedicalRecord = () => {
       }
     } else {
       // Token not found, redirect to login page or show an error message
-      router.push("/Doctor/LoginPage");
+      router.push("/Hospital/LoginPage");
 
       console.log("Token not found. Please log in.");
     }
-    fetchMedicalRecords();
+    fetchPatients();
   }, [router]);
-  useEffect(() => {
-    if (medicalRecords.length > 0) {
-      const patientIds = medicalRecords.map((record) => record.patientId);
-      const doctorIds = medicalRecords.map((record) => record.doctorId);
+  const filterRecords = (value) => {
+    setSearchTerm(value);
+  };
 
-      const fetchPatientInfo = async (id) => {
-        try {
-          const response = await axios.get(
-            `${process.env.service}/api/patient/${id}`
-          );
-          const patientData = response.data;
-          setPatientInfo((prevInfo) => ({
-            ...prevInfo,
-            [id]: patientData,
-          }));
-        } catch (error) {
-          console.error(
-            `Failed to fetch patient information for ID ${id}:`,
-            error
-          );
-        }
-      };
-
-      const fetchDoctorInfo = async (doctorId) => {
-        try {
-          const response = await axios.get(
-            `${process.env.service}/api/doctor/${doctorId}`
-          );
-          const doctorData = response.data;
-          setDoctorInfo((prevInfo) => ({
-            ...prevInfo,
-            [doctorId]: doctorData,
-          }));
-        } catch (error) {
-          console.error(
-            `Failed to fetch doctor information for ID ${doctorId}:`,
-            error
-          );
-        }
-      };
-
-      patientIds.forEach((patientId) => {
-        fetchPatientInfo(patientId);
-      });
-
-      doctorIds.forEach((doctorIds) => {
-        fetchDoctorInfo(doctorIds);
-      });
+  // Filter staff based on search term
+  const filteredPatients = patients.filter((patient) => {
+    if (patient?.name != null) {
+      return patient?.name.toLowerCase().includes(searchTerm.toLowerCase());
     }
-  }, [medicalRecords]);
+  });
+  // Calculate total number of pages
+  const totalPages = Math.ceil(patients.length / accountsPerPage);
+
+  // Get current accounts based on pagination
+  const indexOfLastAccount = currentPage * accountsPerPage;
+  const indexOfFirstAccount = indexOfLastAccount - accountsPerPage;
+  const currentAccounts = filteredPatients.slice(
+    indexOfFirstAccount,
+    indexOfLastAccount
+  );
+  // Update current page
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
   const calculateAge = (birthday) => {
     const currentYear = new Date().getFullYear();
     const birthYear = new Date(birthday).getFullYear();
     const age = currentYear - birthYear;
     return age;
   };
-  // Calculate total number of pages
-  const totalPages = Math.ceil(medicalRecords.length / accountsPerPage);
-
-  // Get current accounts based on pagination
-  const indexOfLast = currentPage * accountsPerPage;
-  const indexOfFirst = indexOfLast - accountsPerPage;
-  const currentMedicalRecords = medicalRecords.slice(indexOfFirst, indexOfLast);
-  // Update current page
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
   return (
     <div>
       <Navigation />
       <div className="sm:container sm:mx-auto">
+        <nav
+          className="flex px-5 mb-2 py-3 text-gray-700 border border-gray-200 rounded-lg bg-gray-50 dark:bg-gray-800 dark:border-gray-700"
+          aria-label="Breadcrumb"
+        >
+          <ol className="inline-flex items-center space-x-1 md:space-x-3">
+            <li className="inline-flex items-center"></li>
+            <li>
+              <div className="flex items-center">
+                <div className="ml-1 text-sm font-medium text-gray-700 hover:text-blue-600 md:ml-2 dark:text-gray-400 dark:hover:text-white">
+                  <Link href="/Hospital/Patient">Bệnh nhân</Link>
+                </div>
+              </div>
+            </li>
+            <li aria-current="page">
+              <div className="flex items-center">
+                <svg
+                  aria-hidden="true"
+                  className="w-6 h-6 text-gray-400"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                <span className="ml-1 text-sm font-medium text-gray-500 md:ml-2 dark:text-gray-400">
+                  Danh sách bệnh nhân
+                </span>
+              </div>
+            </li>
+          </ol>
+        </nav>
         <div className="relative overflow-x-auto shadow-md sm:rounded-lg">
-          <div className="flex items-center p-4 justify-between py-4 bg-white dark:bg-gray-800">
-            <div className="font-medium">Danh sách bệnh án</div>
+          <div className="flex p-4 items-center justify-between py-4 bg-white dark:bg-gray-800">
+            <div className="font-medium">Danh sách bệnh nhân</div>
             <label htmlFor="table-search" className="sr-only">
               Search
             </label>
@@ -162,90 +143,51 @@ const MedicalRecord = () => {
                 type="text"
                 id="table-search-users"
                 className="block p-2 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg w-80 bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                placeholder="Tìm bệnh án"
+                placeholder="Tìm bệnh nhân"
                 onChange={(e) => filterRecords(e.target.value)}
               />
             </div>
           </div>
-
           <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
             <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
               <tr>
-                <th scope="col" className="p-6 py-3">
-                  <div className="relative">
-                    <select
-                      className="block p-2  text-sm text-gray-900 border border-gray-300 rounded-lg w-30 bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                      value={statusFilter}
-                      onChange={(e) => filterRecords(e.target.value)}
-                    >
-                      <option value="all">Tất cả</option>
-                      <option value="minted">NFT</option>
-                      <option value="draft">Bản nháp</option>
-                      <option value="reject">Từ chối</option>
-                    </select>
-                  </div>
-                </th>
-                <th scope="col" className="px-12 py-3">
+                <th scope="col" className="px-12 py-5">
                   Bệnh nhân
                 </th>
-                <th scope="col" className="px-12 py-5">
-                  Bác sĩ
+                <th scope="col" className="px-6 py-5">
+                  Giới tính
+                </th>
+                <th scope="col" className="px-6 py-5 ">
+                  Số điện thoại
                 </th>
                 <th scope="col" className="px-6 py-3">
-                  Ngày tạo
+                  Xem thông tin
                 </th>
-                <th scope="col" className="px-6 py-3"></th>
               </tr>
             </thead>
             <tbody>
-              {currentMedicalRecords.map((record, index) => (
+              {currentAccounts.map((patient) => (
                 <tr
-                  key={index}
+                  key={patient._id}
                   className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
                 >
-                  <td className="w-4 p-12">
-                    {record.status === "minted" && (
-                      <>
-                        <span className="bg-blue-100 text-blue-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-full dark:bg-blue-900 dark:text-blue-300">
-                          NFT
-                        </span>
-                      </>
-                    )}
-                    {record.status === "reject" && (
-                      <>
-                        <span className="bg-red-100 text-red-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-full dark:bg-red-900 dark:text-red-300">
-                          Từ chối
-                        </span>
-                      </>
-                    )}
-                    {record.status === "draft" && (
-                      <>
-                        <span className="bg-gray-100 text-gray-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-full dark:bg-red-900 dark:text-red-300">
-                          Nháp
-                        </span>
-                      </>
-                    )}
-                  </td>
-                  <td className="px-6 py-2">
-                    {patientInfo[record.patientId]?.picture ? (
+                  <td className="px-6 py-4">
+                    {patient?.picture ? (
                       <div
                         scope="row"
                         className="flex items-center px-6 py-4 text-gray-900 whitespace-nowrap dark:text-white"
                       >
                         <img
                           className="w-10 h-10 rounded-full"
-                          src={patientInfo[record.patientId]?.picture || ""}
+                          src={patient?.picture || ""}
                           alt="patient"
                         />
                         <div className="pl-3">
                           <div className="text-base font-semibold">
-                            {patientInfo[record.patientId]?.name}
+                            {patient?.name}
                           </div>
                           <div className="font-normal text-gray-500">
-                            {calculateAge(
-                              patientInfo[record.patientId]?.birthday
-                            )}{" "}
-                            tuổi
+                            {calculateAge(patient?.birthday)} tuổi
                           </div>
                         </div>
                       </div>
@@ -271,64 +213,28 @@ const MedicalRecord = () => {
                       </div>
                     )}
                   </td>
-                  <td className="px-6 py-2">
-                    {doctorInfo[record.doctorId]?.picture ? (
-                      <div
-                        scope="row"
-                        className="flex items-center px-6 py-4 text-gray-900 whitespace-nowrap dark:text-white"
-                      >
-                        <img
-                          className="w-10 h-10 rounded-full"
-                          src={doctorInfo[record.doctorId]?.picture || ""}
-                          alt="doctor"
-                        />
-                        <div className="pl-3">
-                          <div className="text-base font-semibold">
-                            {doctorInfo[record.doctorId]?.name}
-                          </div>
-                          <div className="font-normal text-gray-500">
-                            {doctorInfo[record.doctorId]?.specialization}
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <div>
-                        <svg
-                          aria-hidden="true"
-                          className="w-8 h-8 mr-2 text-gray-200 animate-spin dark:text-gray-600 fill-blue-600"
-                          viewBox="0 0 100 101"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <path
-                            d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
-                            fill="currentColor"
-                          />
-                          <path
-                            d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
-                            fill="currentFill"
-                          />
-                        </svg>
-                        <span className="sr-only">Loading...</span>
-                      </div>
-                    )}
+                  <td className="px-6 text-gray-900 py-4">
+                    {patient.gender.charAt(0).toUpperCase() +
+                      patient.gender.slice(1)}
                   </td>
                   <td className="px-6 py-4">
-                    {new Date(record.date).toLocaleDateString("en-GB", {
-                      day: "2-digit",
-                      month: "2-digit",
-                      year: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      hour12: true,
-                    })}
+                    {patient.fatherContact && (
+                      <p className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                        <span>Bố: {patient.fatherContact}</span>
+                      </p>
+                    )}
+                    {patient.motherContact && (
+                      <p className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                        <span>Mẹ: {patient.motherContact}</span>
+                      </p>
+                    )}
                   </td>
                   <td className="px-6 py-4">
                     <a
-                      href={`./MedicalRecord/${record._id}`}
+                      href={`./PatientProfile/${patient._id}`}
                       className="font-medium text-blue-600 dark:text-blue-500 hover:underline"
                     >
-                      Xem
+                      Xem thông tin
                     </a>
                   </td>
                 </tr>
@@ -424,4 +330,4 @@ const MedicalRecord = () => {
   );
 };
 
-export default MedicalRecord;
+export default PatientList;

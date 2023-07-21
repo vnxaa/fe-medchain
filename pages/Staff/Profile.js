@@ -1,16 +1,11 @@
-import axios from "axios";
 import jwt_decode from "jwt-decode";
 import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
 import Navigation from "../Common/Navigation";
 const Profile = () => {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState("profile");
-  const [hospitalInfo, setHospitalInfo] = useState("");
-
-  const handleTabClick = (tab) => {
-    setActiveTab(tab);
-  };
+  const [staffId, setStaffId] = useState("");
+  const [staffInfo, setStaffInfo] = useState({});
   useEffect(() => {
     // Get the token from localStorage
     const token = localStorage.getItem("token");
@@ -19,18 +14,17 @@ const Profile = () => {
       try {
         // Decode the token
         const decoded = jwt_decode(token);
-        console.log(decoded);
 
-        // Check if the user is a hospital
-        if (decoded.hospital) {
-          // User is a hospital, allow access to the hospital page
-          console.log("Access granted to hospital page");
-          const hospitalId = decoded.hospital._id;
-
-          fetchHospitalInfo(hospitalId);
+        // Check if the user is a patient
+        if (decoded.user.role == "staff") {
+          setStaffInfo(decoded?.user);
+          setStaffId(decoded?.user?._id);
+          // User is a patient, allow access to the patient page
+          console.log("Access granted to staff page");
         } else {
-          // User is not a hospital, redirect to another page or show an error message
-          console.log("Access denied. User is not a hospital");
+          router.push("/Staff/LoginPage");
+          // User is not a patient, redirect to another page or show an error message
+          console.log("Access denied. User is not a staff");
         }
       } catch (error) {
         // Handle decoding error
@@ -38,37 +32,25 @@ const Profile = () => {
       }
     } else {
       // Token not found, redirect to login page or show an error message
-      router.push("/Hospital/LoginPage");
+      router.push("/Staff/LoginPage");
 
       console.log("Token not found. Please log in.");
     }
   }, [router]);
-  const fetchHospitalInfo = async (hospitalId) => {
-    try {
-      const response = await axios.get(
-        `${process.env.service}/api/hospital/${hospitalId}`
-      );
-      setHospitalInfo(response.data);
-    } catch (error) {
-      console.error(error);
-    }
-  };
-  //   if (!hospitalInfo) {
-  //     return <div>Loading...</div>; // Display a loading state while fetching data
-  //   }
+
   return (
     <div>
       <Navigation />
-      <div className="sm:container center sm:mx-auto">
+      <div className="sm:container sm:mx-auto">
         <div className="flex flex-wrap justify-center ">
           <div className="">
             <div className="sm:container mb-2 sm:mx-auto flex flex-col items-center">
               <div className="w-40 h-62 mb-2 p-6 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
                 <div className="relative inline-block">
-                  {hospitalInfo.picture ? (
+                  {staffInfo.picture ? (
                     <>
                       <img
-                        src={hospitalInfo.picture}
+                        src={staffInfo.picture}
                         alt="staff"
                         className="rounded-full object-cover w-36 h-auto"
                       />
@@ -97,11 +79,14 @@ const Profile = () => {
                     </>
                   )}
                 </div>
-                <p className="font-medium text-center ">{hospitalInfo?.name}</p>
+                <p className="font-medium text-center ">{staffInfo?.name}</p>
 
+                <p className="text-center mb-2 font-light italic">
+                  @{staffInfo?.username}
+                </p>
                 <div className="flex items-center justify-center">
-                  <span className="bg-blue-100 mt-2 text-blue-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-full dark:bg-blue-900 dark:text-blue-300">
-                    Bệnh viện
+                  <span className="bg-blue-100 text-blue-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-full dark:bg-blue-900 dark:text-blue-300">
+                    Nhân viên
                   </span>
                 </div>
               </div>
@@ -109,15 +94,37 @@ const Profile = () => {
           </div>
           <div className="w-full sm:w-1/2 sm:pl-2">
             <div className="max-w-full   p-6 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
-              <p className="font-medium mb-2 text-lg">Thông tin bệnh viện</p>
+              <p className="font-medium mb-2 text-lg">Hồ sơ cá nhân</p>
               <div className="border-t border-gray-200">
                 <dl>
+                  <div className="px-4 py-5 bg-gray-50 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <dt className="text-sm font-medium text-gray-500">
+                      Giới tính
+                    </dt>
+                    <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                      {staffInfo.gender &&
+                        `${
+                          staffInfo.gender.charAt(0).toUpperCase() +
+                          staffInfo.gender.slice(1)
+                        }`}
+                    </dd>
+                  </div>
+                  <div className="px-4 py-5 bg-white sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <dt className="text-sm font-medium text-gray-500">
+                      Ngày Sinh
+                    </dt>
+                    <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                      {new Date(staffInfo?.birthday).toLocaleDateString(
+                        "en-GB"
+                      )}
+                    </dd>
+                  </div>
                   <div className="px-4 py-5 bg-gray-50 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                     <dt className="text-sm font-medium text-gray-500">
                       Số điện thoại
                     </dt>
                     <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                      {hospitalInfo?.phoneNumber}
+                      {staffInfo?.contactNumber}
                     </dd>
                   </div>
                   <div className="px-4 py-5 bg-white sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
@@ -125,13 +132,13 @@ const Profile = () => {
                       Địa chỉ
                     </dt>
                     <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                      {hospitalInfo?.address}
+                      {staffInfo?.address}
                     </dd>
                   </div>
                   <div className="px-4 py-5 bg-gray-50 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                     <dt className="text-sm font-medium text-gray-500">Email</dt>
                     <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                      {hospitalInfo?.email}
+                      {staffInfo?.email}
                     </dd>
                   </div>
                 </dl>

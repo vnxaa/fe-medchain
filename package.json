@@ -39,6 +39,7 @@
     "react-hooks-global-state": "^2.0.0-rc.0",
     "react-responsive-carousel": "^3.2.23",
     "reactjs-popup": "^2.0.5",
+    "tailwind-datepicker-react": "^1.4.0",
     "validator": "^13.7.0",
     "web3": "^1.7.4",
     "web3modal": "^1.9.8"
