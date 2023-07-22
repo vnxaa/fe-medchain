@@ -132,6 +132,22 @@ const AppointmentRequests = () => {
       throw new Error("Failed to update appointment status");
     }
   }
+
+  async function approveAppointment(appointmentId) {
+    try {
+      const response = await axios.put(
+        `${process.env.service}/api/appointment/approve/${appointmentId}`
+      );
+
+      setEvents((prevEvents) =>
+        prevEvents.filter((event) => event.appointmentId !== appointmentId)
+      );
+      return response.data;
+    } catch (error) {
+      console.error(error);
+      throw new Error("Failed to approve appointment status");
+    }
+  }
   const updateStatusAvailableSlot = async () => {
     try {
       const response = await axios.put(
@@ -212,8 +228,8 @@ const AppointmentRequests = () => {
     updateStatusAvailableSlot(slotId);
     setShowConfirmation(false);
   };
-  const handleApprovelAppoinment = async (appointmentId, newStatus) => {
-    updateAppointmentStatus(appointmentId, newStatus);
+  const handleApprovelAppoinment = async (appointmentId) => {
+    approveAppointment(appointmentId);
     setShowConfirmation(false);
   };
   const handleExit = () => {
@@ -499,9 +515,7 @@ const AppointmentRequests = () => {
                   <>
                     <div className="flex items-center p-6 space-x-2 border-t border-gray-200 rounded-b dark:border-gray-600">
                       <button
-                        onClick={() =>
-                          handleApprovelAppoinment(appointmentId, "confirmed")
-                        }
+                        onClick={() => handleApprovelAppoinment(appointmentId)}
                         data-modal-hide="staticModal"
                         type="button"
                         className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"

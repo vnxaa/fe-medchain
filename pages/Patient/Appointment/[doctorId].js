@@ -7,6 +7,7 @@ import jwt_decode from "jwt-decode";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import React, { useCallback, useEffect, useState } from "react";
+import Barcode from "react-jsbarcode";
 import Navigation from "../../Common/Navigation";
 export const StyleWrapper = styled.div`
   .fc td {
@@ -30,7 +31,6 @@ const Appointment = () => {
   const { doctorId } = router.query;
   const [selectedTime, setSelectedTime] = useState(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
-  const [patientId, setPatientId] = useState(null);
   const [currentPatientId, setCurrentPatientId] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [appointments, setAppointments] = useState([]);
@@ -42,6 +42,13 @@ const Appointment = () => {
   const [availableSlots, setAvailableSlots] = useState([]);
   const [slotId, setSlotId] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [hasAppointments, setHasAppointments] = useState(false);
+  const [appointmentsPatient, setAppointmentsPatient] = useState({});
+  const [loadingAppointment, setLoadingAppointment] = useState(true);
+  // console.log(appointmentsPatient[0].status);
+  // console.log(doctorId);
+  // console.log(currentPatientId);
+
   const handleToggleDrawerDoctor = () => {
     setShowDrawerPatient(false);
     setShowDrawerDoctor(!showDrawerDoctor);
@@ -124,83 +131,36 @@ const Appointment = () => {
     setShowDrawerPatient(false);
     setShowDrawerDoctor(false);
   };
-  // const getAppointmentsByDoctorId = (doctorId) => {
-  //   // Make the GET request using Axios
-  //   axios
-  //     .get(`${process.env.service}/api/appointment/doctor/${doctorId}`)
-  //     .then((response) => {
-  //       // Handle the response data
-  //       const appointments = response.data.appointments;
-
-  //       const filteredAppointments = appointments.filter(
-  //         (appointment) =>
-  //           appointment.status === "pending" ||
-  //           appointment.status === "confirmed" ||
-  //           currentPatientId == appointment.patient
-  //       );
-  //       setAppointments(filteredAppointments);
-  //       const updatedEvents = [
-  //         ...filteredAppointments.map((appointment) => ({
-  //           title: appointment.status,
-  //           start: appointment.slot.startTime,
-  //           end: appointment.slot.endTime,
-  //           patientId: appointment.patient,
-  //           color: statusColors[appointment.status],
-  //         })),
-  //         ...availableSlots,
-  //       ];
-  //       setEvents(updatedEvents);
-  //     })
-  //     .catch((error) => {
-  //       // Handle any errors
-  //       console.error(error);
-  //     });
-  // };
-
-  // const getAvailableSlotsByDoctorId = async (doctorId) => {
-  //   try {
-  //     const response = await axios.get(
-  //       `${process.env.service}/api/availableSlot/doctors/${doctorId}`
-  //     );
-
-  //     const availableSlots = response.data.availableSlots.filter(
-  //       (slot) =>
-  //         !slot.isBooked &&
-  //         new Date(slot.startTime) >= new Date() &&
-  //         !appointments.some(
-  //           (appointment) =>
-  //             appointment.slot._id === slot._id &&
-  //             appointment.status === "pending"
-  //         )
-  //     );
-  //     console.log(availableSlots);
-  //     const events = availableSlots.map((slot) => ({
-  //       title: "Available",
-  //       start: slot.startTime,
-  //       end: slot.endTime,
-  //       extendedProps: {
-  //         id: slot._id,
-  //       },
-  //     }));
-  //     setAvailableSlots(events);
-  //   } catch (error) {
-  //     console.error(error);
-  //     throw error;
-  //   }
-  // };
+  const checkPatientAppointments = async (doctorId, patientId) => {
+    try {
+      const response = await axios.get(
+        `${process.env.service}/api/events/check-appointments/${doctorId}/${patientId}`
+      );
+      const { hasAppointments, appointments } = response.data;
+      setHasAppointments(hasAppointments);
+      setAppointmentsPatient(appointments);
+    } catch (error) {
+      console.error("Error occurred during API call:", error.message);
+    }
+  };
   const fetchDataEvents = useCallback(async (doctorId, patientId) => {
     try {
       const response = await axios.get(
         `${process.env.service}/api/events/patient/${doctorId}/${patientId}`
       );
       const { availableSlots, appointments } = response.data;
+      // Filter out appointments with the "cancelled" status
+      const filteredAppointments = appointments.filter(
+        (appointment) => appointment.status !== "cancelled"
+      );
+
       const currentTime = new Date(); // Get the current time
 
       const filteredAvailableSlots = availableSlots.filter(
         (slot) => new Date(slot?.startTime) > currentTime // Filter slots that are greater than the current time
       );
       const events = [
-        ...appointments.map((appointment) => ({
+        ...filteredAppointments.map((appointment) => ({
           appointmentId: appointment?._id,
           title: appointment?.status,
           start: appointment?.slot?.startTime,
@@ -218,8 +178,8 @@ const Appointment = () => {
         })),
       ];
 
-      setAppointments(appointments);
-      setAvailableSlots(availableSlots);
+      setAppointments(filteredAppointments);
+      setAvailableSlots(filteredAvailableSlots);
       setEvents(events);
     } catch (error) {
       console.error(error);
@@ -256,28 +216,39 @@ const Appointment = () => {
 
       console.log("Token not found. Please log in.");
     }
-    // if (patientId) {
-    //   fetchPatientInfo(patientId);
-    // }
+    if (currentPatientId) {
+      fetchPatientInfo(currentPatientId);
+    }
   }, [router, setCurrentPatientId]);
   useEffect(() => {
     if (doctorId && currentPatientId) {
       // Fetch doctor information
-
       fetchDoctorInfo(doctorId);
 
-      // Fetch events data
-      fetchDataEvents(doctorId, currentPatientId);
+      // Check patient appointments and conditionally fetch events data
+      checkPatientAppointments(doctorId, currentPatientId)
+        .then((hasAppointments) => {
+          if (!hasAppointments) {
+            // Fetch events data
+            fetchDataEvents(doctorId, currentPatientId);
 
-      // Fetch events data every 5 seconds
-      const intervalId = setInterval(() => {
-        fetchDataEvents(doctorId, currentPatientId).catch((error) => {
+            // Fetch events data every 5 seconds
+            const intervalId = setInterval(() => {
+              fetchDataEvents(doctorId, currentPatientId).catch((error) => {
+                console.error(error);
+              });
+            }, 6000);
+
+            // Cleanup the interval when the component unmounts or when the doctorId or currentPatientId changes
+            return () => clearInterval(intervalId);
+          }
+        })
+        .catch((error) => {
           console.error(error);
+        })
+        .finally(() => {
+          setLoadingAppointment(false);
         });
-      }, 6000);
-
-      // Cleanup the interval when the component unmounts or when the doctorId or currentPatientId changes
-      return () => clearInterval(intervalId);
     }
   }, [doctorId, currentPatientId, fetchDataEvents]);
 
@@ -287,21 +258,6 @@ const Appointment = () => {
     cancelled: "#c81e1e",
   };
 
-  const selectAllow = (selectInfo) => {
-    const currentTime = new Date(); // Get the current time
-    const futureDate = new Date();
-    futureDate.setDate(futureDate.getDate() + 14);
-    const selectedTime = new Date(selectInfo.start);
-    console.log("selectedTime", selectedTime);
-    console.log("currentTime", currentTime);
-
-    if (selectedTime >= currentTime && selectedTime <= futureDate) {
-      return true; // Allow selecting the appointment
-    }
-
-    return false; // Disable selecting the appointment
-  };
-
   const currentDate = new Date();
   const startOfWeek = new Date(currentDate);
   startOfWeek.setDate(startOfWeek.getDate() - currentDate.getDay()); // Đưa ngày về đầu tuần (chủ nhật)
@@ -309,6 +265,13 @@ const Appointment = () => {
   endOfWeek.setDate(endOfWeek.getDate() + 7); // Thêm một tuần vào cuối tuần
 
   // futureDate.setDate(futureDate.getDate() + 7);
+  const calculateAge = (birthday) => {
+    const currentYear = new Date().getFullYear();
+    const birthYear = new Date(birthday).getFullYear();
+    const age = currentYear - birthYear;
+    return age;
+  };
+
   return (
     <div>
       <Navigation />
@@ -349,89 +312,374 @@ const Appointment = () => {
               </li>
             </ol>
           </nav>
-          <StyleWrapper>
-            <FullCalendar
-              height="auto"
-              plugins={[timeGridPlugin, interactionPlugin]}
-              // selectable={true}
-              initialView="timeGridWeek"
-              select={handleAppoinment}
-              dayMaxEvents={true}
-              validRange={{
-                // start: startOfWeek,
-                end: endOfWeek,
-              }}
-              events={events}
-              selectConstraint={availableSlots}
-              allDaySlot={false}
-              dayMaxEventRows={true}
-              slotDuration="00:30:00" // Set the slot duration to 30 minutes
-              slotLabelInterval="00:30" // Show slot labels every 1 hour
-              locale="vi"
-              slotMinTime="09:00:00"
-              slotMaxTime="17:00:00"
-              slotLabelFormat={{
-                hour: "numeric",
-                minute: "2-digit",
-                omitZeroMinute: false,
-              }}
-              headerToolbar={{
-                left: "prev,next today",
-                center: "title",
-                right: "timeGridWeek,timeGridDay",
-              }}
-              buttonText={{
-                today: "Hôm nay",
-                week: "Tuần",
-                day: "Ngày",
-              }}
-              titleFormat={{
-                day: "numeric",
-                year: "numeric",
-                month: "long",
-              }}
-              // selectAllow={selectAllow}
-              eventContent={(eventInfo) => {
-                return (
-                  <button
-                    type="button"
-                    onClick={() => handleAppoinment(eventInfo)}
-                  >
-                    <p>
-                      {/* {eventInfo.event.title === "confirmed" &&
+          {loadingAppointment ? (
+            <>
+              <div>
+                <svg
+                  aria-hidden="true"
+                  className="inline w-4 h-4 mr-2 text-gray-200 animate-spin dark:text-gray-600 fill-blue-600"
+                  viewBox="0 0 100 101"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
+                    fill="currentColor"
+                  />
+                  <path
+                    d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
+                    fill="currentFill"
+                  />
+                </svg>
+                <span className="sr-only">Loading...</span>
+              </div>
+            </>
+          ) : (
+            <>
+              {hasAppointments ? (
+                <>
+                  <div className="sm:container sm:mx-auto flex h-fit justify-center items-center">
+                    <div className="w-40 h-62 mb-2 mr-6 p-6 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                      {/* Patient Information */}
+                      <div className="relative inline-block">
+                        {patientInfo.picture ? (
+                          <>
+                            <img
+                              src={patientInfo.picture}
+                              alt="staff"
+                              className="rounded-full object-cover w-36 h-auto"
+                            />
+                          </>
+                        ) : (
+                          <>
+                            <div role="status">
+                              <svg
+                                aria-hidden="true"
+                                className="inline w-8 h-8 mr-2 text-gray-200 animate-spin dark:text-gray-600 fill-blue-600"
+                                viewBox="0 0 100 101"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                {/* SVG path here */}
+                              </svg>
+                              <span className="sr-only">Loading...</span>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                      <p className="font-medium text-center ">
+                        {patientInfo?.name}
+                      </p>
+                      <p className="text-center mb-2 font-normal italic">
+                        {calculateAge(patientInfo?.birthday)} tuổi
+                      </p>
+                      <div className="flex items-center justify-center">
+                        <span className="bg-blue-100 text-blue-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-full dark:bg-blue-900 dark:text-blue-300">
+                          Bệnh nhân
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="">
+                      {/* "Phiếu khám" Content */}
+                      {appointmentsPatient[0]?.status === "pending" ? (
+                        <>
+                          <a
+                            // href="#"
+                            className="block max-w-md p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700"
+                          >
+                            <div className="flex items-start justify-center border-b rounded-t dark:border-gray-600">
+                              <h5 className="mb-2 text-xl uppercase font-bold tracking-tight text-gray-900 dark:text-white">
+                                THÔNG TIN ĐẶT KHÁM
+                              </h5>
+                            </div>
+                            <div className="flex justify-center ">
+                              <span className="font-medium text-lg mt-2">
+                                Bệnh Viện Phụ Sản - Nhi Đà Nẵng
+                              </span>
+                            </div>
+                            <div className="flex justify-center ">
+                              <span className="font-normal text-sm mb-2">
+                                402 Lê Văn Hiến, Quận Ngũ Hành Sơn, Thành phố Đà
+                                Nẵng
+                              </span>
+                            </div>
+                            <div className="flex justify-center ">
+                              {/* <span className="bg-yellow-100 mt-1 ml-2 mb-4 text-yellow-800 text-lg font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-yellow-900 dark:text-yellow-300">
+                            Đang chờ xác nhận
+                          </span> */}
+                              <span className="border border-yellow-300 bg-yellow-100 text-yellow-800 mb-2 text-base font-medium mr-2 px-2.5 py-0.5 rounded-full dark:bg-yellow-900 dark:text-yellow-300">
+                                Đang chờ xác nhận
+                              </span>
+                            </div>
+                            <hr className="w-48 h-1 mx-auto bg-gray-200 border-0 rounded  dark:bg-gray-700" />
+                            <div className="flex justify-center ">
+                              <span className="font-medium text-lg mt-2">
+                                Giờ khám
+                              </span>
+                            </div>
+                            <div className="flex justify-center ">
+                              <span className="font-medium text-blue-700 text-lg mb-2">
+                                {new Date(
+                                  appointmentsPatient[0]?.slot?.startTime
+                                ).toLocaleTimeString()}{" "}
+                                -{" "}
+                                {new Date(
+                                  appointmentsPatient[0]?.slot?.endTime
+                                ).toLocaleTimeString()}
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <p className="font-normal text-gray-700 dark:text-gray-400">
+                                Dịch vụ:
+                              </p>
+                              <p>Khám tim bẩm sinh</p>
+                            </div>
+                            <div className="flex justify-between">
+                              <p className="font-normal text-gray-700 dark:text-gray-400">
+                                Ngày khám:
+                              </p>
+                              <p>
+                                {" "}
+                                {new Date(
+                                  appointmentsPatient[0]?.slot?.date
+                                ).toLocaleDateString("en-GB")}
+                              </p>
+                            </div>
+
+                            {/* <div className="flex justify-center mt-4">
+                          <span className="font-medium text-lg">
+                            Mã phiếu khám
+                          </span>
+                        </div>
+                        <div className="flex justify-center">
+                          <Barcode
+                            value="64a7982655669a0fcab0242a"
+                            options={{ format: "code128", displayValue: false }}
+                          />
+                        </div> */}
+                          </a>
+                        </>
+                      ) : (
+                        <>
+                          <a
+                            href={`/AppointmentInformation/${appointmentsPatient[0]?.code}`}
+                            className="block max-w-md p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700"
+                          >
+                            <div className="flex items-start justify-center border-b rounded-t dark:border-gray-600">
+                              <h5 className="mb-2 text-xl uppercase font-bold tracking-tight text-gray-900 dark:text-white">
+                                Phiếu khám bệnh
+                              </h5>
+                            </div>
+                            <div className="flex justify-center ">
+                              <span className="font-medium text-lg mt-2">
+                                Bệnh Viện Phụ Sản - Nhi Đà Nẵng
+                              </span>
+                            </div>
+                            <div className="flex justify-center ">
+                              <span className="font-normal text-sm mb-2">
+                                402 Lê Văn Hiến, Quận Ngũ Hành Sơn, Thành phố Đà
+                                Nẵng
+                              </span>
+                            </div>
+                            <div className="flex justify-center">
+                              <span className="font-medium text-lg ">
+                                Mã phiếu khám
+                              </span>
+                            </div>
+                            <div className="flex justify-center mt-2">
+                              <Barcode
+                                value={appointmentsPatient[0]?.code}
+                                options={{
+                                  format: "code128",
+                                  displayValue: false,
+                                }}
+                              />
+                            </div>
+                            <div className="flex justify-center ">
+                              <span className=" border border-blue-400 bg-blue-100 text-blue-800  mb-2 text-base font-medium mr-2 px-2.5 py-0.5 rounded-full dark:bg-gray-700 dark:text-blue-400">
+                                Đã xác nhận
+                              </span>
+                            </div>
+                            <hr className="w-48 h-1 mx-auto bg-gray-200 border-0 rounded mt-2  dark:bg-gray-700" />
+                            <div className="flex justify-center ">
+                              <span className="font-medium text-lg mt-2">
+                                Giờ khám
+                              </span>
+                            </div>
+                            <div className="flex justify-center ">
+                              <span className="font-medium text-blue-700 text-lg mb-2">
+                                {new Date(
+                                  appointmentsPatient[0]?.slot?.startTime
+                                ).toLocaleTimeString()}{" "}
+                                -{" "}
+                                {new Date(
+                                  appointmentsPatient[0]?.slot?.endTime
+                                ).toLocaleTimeString()}
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <p className="font-normal text-gray-700 dark:text-gray-400">
+                                Dịch vụ:
+                              </p>
+                              <p>Khám tim bẩm sinh</p>
+                            </div>
+                            <div className="flex justify-between">
+                              <p className="font-normal text-gray-700 dark:text-gray-400">
+                                Ngày khám:
+                              </p>
+                              <p>
+                                {" "}
+                                {new Date(
+                                  appointmentsPatient[0]?.slot?.date
+                                ).toLocaleDateString("en-GB")}
+                              </p>
+                            </div>
+                            {/* <div className="flex justify-between">
+                          <p className="font-normal text-gray-700 dark:text-gray-400">
+                            Mã phiếu khám:
+                          </p>
+                          <p>{appointmentsPatient[0]?._id}</p>
+                        </div> */}
+                          </a>
+                        </>
+                      )}
+                    </div>
+
+                    <div className="w-40 h-62 mb-2 ml-6 p-6 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                      {/* Doctor Information */}
+                      <div className="relative inline-block">
+                        {doctorInfo.picture ? (
+                          <>
+                            <img
+                              src={doctorInfo.picture}
+                              alt="staff"
+                              className="rounded-full object-cover w-36 h-auto"
+                            />
+                          </>
+                        ) : (
+                          <>
+                            <div role="status">
+                              <svg
+                                aria-hidden="true"
+                                className="inline w-8 h-8 mr-2 text-gray-200 animate-spin dark:text-gray-600 fill-blue-600"
+                                viewBox="0 0 100 101"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                {/* SVG path here */}
+                              </svg>
+                              <span className="sr-only">Loading...</span>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                      <p className="font-medium text-center ">
+                        {doctorInfo?.name}
+                      </p>
+                      <p
+                        style={{ wordWrap: "break-word" }}
+                        className="text-center mb-2  font-normal italic"
+                      >
+                        {doctorInfo?.specialization}
+                      </p>
+                      <div className="flex items-center justify-center">
+                        <span className="bg-blue-100 text-blue-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-full dark:bg-blue-900 dark:text-blue-300">
+                          Bác sĩ
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <StyleWrapper>
+                    <FullCalendar
+                      height="auto"
+                      plugins={[timeGridPlugin, interactionPlugin]}
+                      // selectable={true}
+                      initialView="timeGridWeek"
+                      select={handleAppoinment}
+                      dayMaxEvents={true}
+                      validRange={{
+                        // start: startOfWeek,
+                        end: endOfWeek,
+                      }}
+                      events={events}
+                      selectConstraint={availableSlots}
+                      allDaySlot={false}
+                      dayMaxEventRows={true}
+                      slotDuration="00:30:00" // Set the slot duration to 30 minutes
+                      slotLabelInterval="00:30" // Show slot labels every 1 hour
+                      locale="vi"
+                      slotMinTime="09:00:00"
+                      slotMaxTime="17:00:00"
+                      slotLabelFormat={{
+                        hour: "numeric",
+                        minute: "2-digit",
+                        omitZeroMinute: false,
+                      }}
+                      headerToolbar={{
+                        left: "prev,next today",
+                        center: "title",
+                        right: "timeGridWeek,timeGridDay",
+                      }}
+                      buttonText={{
+                        today: "Hôm nay",
+                        week: "Tuần",
+                        day: "Ngày",
+                      }}
+                      titleFormat={{
+                        day: "numeric",
+                        year: "numeric",
+                        month: "long",
+                      }}
+                      // selectAllow={selectAllow}
+                      eventContent={(eventInfo) => {
+                        return (
+                          <button
+                            type="button"
+                            onClick={() => handleAppoinment(eventInfo)}
+                          >
+                            <p>
+                              {/* {eventInfo.event.title === "confirmed" &&
                   eventInfo.event.extendedProps.patientId === currentPatientId
                     ? "Đã đặt thành công"
                     : "Đã có người đặt"} */}
 
-                      {eventInfo.event.title === "pending" &&
-                      eventInfo.event.extendedProps.patientId ===
-                        currentPatientId
-                        ? "Đang chờ"
-                        : eventInfo.event.title === "confirmed" &&
-                          eventInfo.event.extendedProps.patientId ===
-                            currentPatientId
-                        ? "Đặt thành công"
-                        : eventInfo.event.title === "cancelled" &&
-                          eventInfo.event.extendedProps.patientId ===
-                            currentPatientId
-                        ? "Đã hủy"
-                        : eventInfo.event.title === "confirmed" &&
-                          eventInfo.event.extendedProps.patientId !==
-                            currentPatientId
-                        ? "Đã có người đặt"
-                        : eventInfo.event.title === "pending" &&
-                          eventInfo.event.extendedProps.patientId !==
-                            currentPatientId
-                        ? "Đã có người đặt"
-                        : eventInfo.event.title != null
-                        ? "Đặt khám"
-                        : ""}
-                    </p>
-                  </button>
-                );
-              }}
-            />
-          </StyleWrapper>
+                              {eventInfo.event.title === "pending" &&
+                              eventInfo.event.extendedProps.patientId ===
+                                currentPatientId
+                                ? "Đang chờ"
+                                : eventInfo.event.title === "confirmed" &&
+                                  eventInfo.event.extendedProps.patientId ===
+                                    currentPatientId
+                                ? "Đặt thành công"
+                                : eventInfo.event.title === "cancelled" &&
+                                  eventInfo.event.extendedProps.patientId ===
+                                    currentPatientId
+                                ? "Đã hủy"
+                                : eventInfo.event.title === "confirmed" &&
+                                  eventInfo.event.extendedProps.patientId !==
+                                    currentPatientId
+                                ? "Đã có người đặt"
+                                : eventInfo.event.title === "pending" &&
+                                  eventInfo.event.extendedProps.patientId !==
+                                    currentPatientId
+                                ? "Đã có người đặt"
+                                : eventInfo.event.title != null
+                                ? "Đặt khám"
+                                : ""}
+                            </p>
+                          </button>
+                        );
+                      }}
+                    />
+                  </StyleWrapper>
+                </>
+              )}
+            </>
+          )}
         </div>
         {showConfirmation && (
           <div
@@ -500,7 +748,7 @@ const Appointment = () => {
                           <img
                             className="w-8 h-8 rounded-full"
                             src={doctorInfo.picture}
-                            alt="Neil image"
+                            alt="doctor"
                           />
                         </div>
                         <div className="flex-1 min-w-0">
