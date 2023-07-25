@@ -124,6 +124,8 @@ const Appointment = () => {
       setLoading(false);
       setShowConfirmation(false);
     }
+
+    window.location.reload();
   };
 
   const handleCancelAppointment = () => {

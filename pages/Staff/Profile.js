@@ -81,7 +81,10 @@ const Profile = () => {
                 </div>
                 <p className="font-medium text-center ">{staffInfo?.name}</p>
 
-                <p className="text-center mb-2 font-light italic">
+                <p
+                  style={{ wordWrap: "break-word" }}
+                  className="text-center mb-2 font-light italic"
+                >
                   @{staffInfo?.username}
                 </p>
                 <div className="flex items-center justify-center">

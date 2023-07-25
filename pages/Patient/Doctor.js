@@ -59,7 +59,10 @@ const Doctor = () => {
 
   // Filter doctors based on search term
   const filteredDoctors = doctors.filter((doctor) => {
-    return doctor.name.toLowerCase().includes(searchTerm.toLowerCase());
+    if (doctor && doctor.name) {
+      // Convert both the search term and doctor's name to lowercase for case-insensitive comparison
+      return doctor.name.toLowerCase().includes(searchTerm.toLowerCase());
+    }
   });
   // Calculate total number of pages
   const totalPages = Math.ceil(doctors.length / accountsPerPage);

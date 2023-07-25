@@ -277,7 +277,10 @@ const Settings = () => {
                 </div>
                 <p className="font-medium text-center ">{staffInfo?.name}</p>
 
-                <p className="text-center mb-2 font-light italic">
+                <p
+                  style={{ wordWrap: "break-word" }}
+                  className="text-center mb-2 font-light italic"
+                >
                   @{staffInfo?.username}
                 </p>
                 <div className="flex items-center justify-center">
@@ -361,6 +364,7 @@ const Settings = () => {
                           value={fullName}
                           onChange={(e) => setFullName(e.target.value)}
                           required
+                          disabled
                         />
                       </div>
                       <div className="flex flex-col p-2  w-full sm:w-1/2">

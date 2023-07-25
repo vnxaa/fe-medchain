@@ -119,6 +119,7 @@ const DoctorAccountList = () => {
           role: "doctor",
           email: selectedEmail,
           contactNumber: selectedRecordPhoneNumber,
+          name: selectedRecordName,
         }
       );
 
