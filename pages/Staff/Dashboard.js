@@ -1,3 +1,4 @@
+import axios from "axios";
 import {
   BarElement,
   CategoryScale,
@@ -11,11 +12,13 @@ import {
 import ChartDataLabels from "chartjs-plugin-datalabels";
 import jwt_decode from "jwt-decode";
 import { useRouter } from "next/router";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Bar, Line } from "react-chartjs-2";
 import Navigation from "../Common/Navigation";
 const Dashboard = () => {
   const router = useRouter();
+  const [totalPendingInWeek, SetTotalPendingInWeek] = useState([]);
+  const [dataBarchart, setDataBarchart] = useState([]);
   Chart.register(
     LinearScale,
     CategoryScale,
@@ -25,6 +28,35 @@ const Dashboard = () => {
     LineElement,
     PointElement
   );
+  const getPendingAppointmentsForCurrentWeek = async () => {
+    try {
+      const response = await axios.get(
+        `${process.env.service}/api/appointment/pending/current-week`
+      );
+      const data = response?.data?.data;
+      //   console.log(response?.data?.data);
+      SetTotalPendingInWeek(data);
+      // Handle the data as needed
+    } catch (error) {
+      console.error("Error:", error.message);
+      // Handle errors
+    }
+  };
+  const getCurrentWeekConfirmedAndCancelledAppointments = async () => {
+    try {
+      const response = await axios.get(
+        `${process.env.service}/api/appointment/confirmed-and-cancelled/current-week`
+      );
+
+      if (response.data.success) {
+        setDataBarchart(response.data.data);
+      } else {
+        console.log("Failed to fetch data:", response.data.message);
+      }
+    } catch (error) {
+      console.error("Error fetching data:", error.message);
+    }
+  };
   useEffect(() => {
     // Get the token from localStorage
     const token = localStorage.getItem("token");
@@ -53,6 +85,8 @@ const Dashboard = () => {
 
       console.log("Token not found. Please log in.");
     }
+    getPendingAppointmentsForCurrentWeek();
+    getCurrentWeekConfirmedAndCancelledAppointments();
   }, [router]);
   const dataBar = {
     labels: ["Đặt thành công", "Đặt thất bại"],
@@ -61,13 +95,21 @@ const Dashboard = () => {
         backgroundColor: ["rgba(75, 192, 192, 0.2)", "rgba(255, 99, 132, 0.2)"],
         borderColor: ["rgba(75, 192, 192, 1)", "rgba(255, 99, 132, 1)"],
         borderWidth: 1,
-        data: [30, 20], // Replace with actual data for successful and failed bookings
+        data: dataBarchart, // Replace with actual data for successful and failed bookings
       },
     ],
   };
 
   const optionsBar = {
     indexAxis: "y",
+    scales: {
+      x: {
+        beginAtZero: true,
+        ticks: {
+          stepSize: 1, // Set the step size for the y-axis ticks
+        },
+      },
+    },
     plugins: {
       legend: {
         display: false, // Show the legend to display the label for each dataset
@@ -91,12 +133,14 @@ const Dashboard = () => {
       y: {
         type: "linear",
         beginAtZero: true,
-        max: 100,
+        // max: 100,
+
         ticks: {
           // Add percentage symbol to y-axis ticks
           callback: function (value) {
             return value;
           },
+          stepSize: 1,
         },
       },
     },
@@ -134,7 +178,7 @@ const Dashboard = () => {
       {
         borderColor: "#3B82F6",
         borderWidth: 2,
-        data: [1, 2, 3, 4, 5, 6, 7, 8],
+        data: totalPendingInWeek,
         pointRadius: 5, // Set the radius for the data points
         pointHoverRadius: 7, // Set the radius when hovering over data points
       },

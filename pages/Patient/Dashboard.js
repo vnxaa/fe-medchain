@@ -1,3 +1,4 @@
+import axios from "axios";
 import {
   ArcElement,
   BarElement,
@@ -13,11 +14,44 @@ import {
 } from "chart.js";
 import jwt_decode from "jwt-decode";
 import { useRouter } from "next/router";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { PolarArea, Radar } from "react-chartjs-2";
 import Navigation from "../Common/Navigation";
 const Dashboard = () => {
   const router = useRouter();
+  const [Totalnfts, setTotalNFTs] = useState(0);
+  const [confirmedAppointments, setConfirmedAppointments] = useState([]);
+  const [totalConfirmedAppointments, setTotalConfirmedAppointments] =
+    useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [accountsPerPage] = useState(2);
+  const fetchNFTs = async (address) => {
+    try {
+      const response = await axios.get(`/api/nfts?address=${address}`);
+
+      setTotalNFTs(response.data.length);
+    } catch (error) {
+      console.error("Error fetching NFTs:", error);
+    }
+  };
+  const getConfirmedAppointmentsByPatientId = async (patientId) => {
+    try {
+      const response = await axios.get(
+        `${process.env.service}/api/appointment/confirmed-appointments/${patientId}`
+      );
+
+      const data = response.data;
+
+      const confirmedAppointments = data.data;
+      console.log(confirmedAppointments);
+      setConfirmedAppointments(confirmedAppointments);
+      const totalConfirmedAppointments = confirmedAppointments.length;
+      setTotalConfirmedAppointments(totalConfirmedAppointments);
+    } catch (error) {
+      console.error("Error fetching confirmed appointments:", error);
+      throw error;
+    }
+  };
   Chart.register(
     LineElement,
     PointElement,
@@ -42,6 +76,8 @@ const Dashboard = () => {
 
         // Check if the user is a patient
         if (decoded.patient) {
+          fetchNFTs(decoded.patient.walletAddress);
+          getConfirmedAppointmentsByPatientId(decoded.patient?._id);
           // User is a patient, allow access to the patient page
           console.log("Access granted to patient page");
         } else {
@@ -169,7 +205,7 @@ const Dashboard = () => {
     labels: ["Tổng số bệnh án", "Tổng số lần đặt khám thành công"],
     datasets: [
       {
-        data: [5, 7], // Replace these numbers with the actual data
+        data: [Totalnfts, totalConfirmedAppointments], // Replace these numbers with the actual data
         backgroundColor: ["rgba(54, 162, 235, 0.6)", "rgba(75, 192, 192, 0.6)"],
         borderColor: ["rgba(54, 162, 235, 1)", "rgba(75, 192, 192, 1)"],
         borderWidth: 1,
@@ -191,6 +227,18 @@ const Dashboard = () => {
       },
     },
   };
+  // Calculate total number of pages
+  const totalPages = Math.ceil(confirmedAppointments.length / accountsPerPage);
+
+  // Get current accounts based on pagination
+  const indexOfLastAccount = currentPage * accountsPerPage;
+  const indexOfFirstAccount = indexOfLastAccount - accountsPerPage;
+  const currentConfirmedAppointments = confirmedAppointments.slice(
+    indexOfFirstAccount,
+    indexOfLastAccount
+  );
+  // Update current page
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
   return (
     <div>
       <Navigation />
@@ -219,12 +267,12 @@ const Dashboard = () => {
 
               {/* Column 2 */}
               <div className="h-fit">
-                <div className="max-w h-[500px] p-2 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                <div className="max-w h-[450px] p-2 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
                   <h5 className="text-lg lg:text-xl mb-6 flex font-bold mb-2 text-gray-900 dark:text-white">
                     Thống kê chung
                   </h5>
                   <div className="ml-36">
-                    <div style={{ width: "500px", height: "400px" }}>
+                    <div style={{ width: "500px", height: "380px" }}>
                       <PolarArea
                         data={dataPolarArea}
                         options={optionsPolarArea}
@@ -249,73 +297,172 @@ const Dashboard = () => {
                         <th scope="col" className="px-6 py-3">
                           Giờ khám
                         </th>
+                        <th scope="col" className="px-6 py-3"></th>
                       </tr>
                     </thead>
                     <tbody>
-                      {/* {currentAccounts.map((doctor) => (
-                          <tr
-                            key={doctor._id}
-                            className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
-                          >
-                            <td className="px-6 py-4">
-                              {doctor?.picture ? (
-                                <div
-                                  scope="row"
-                                  className="flex items-center px-6 py-4 text-gray-900 whitespace-nowrap dark:text-white"
-                                >
-                                  <img
-                                    className="w-10 h-10 rounded-full"
-                                    src={doctor?.picture || ""}
-                                    alt="doctor"
-                                  />
-                                  <div className="pl-3">
-                                    <div className="text-base font-semibold">
-                                      {doctor?.name}
-                                    </div>
-                                    <div className="font-normal text-gray-500">
-                                      {doctor?.specialization}
-                                    </div>
+                      {currentConfirmedAppointments.map((doctor) => (
+                        <tr
+                          key={doctor?._id}
+                          className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
+                        >
+                          <td className="px-6 py-4">
+                            {doctor?.doctor?.picture ? (
+                              <div
+                                scope="row"
+                                className="flex items-center px-6 py-4 text-gray-900 whitespace-nowrap dark:text-white"
+                              >
+                                <img
+                                  className="w-10 h-10 rounded-full"
+                                  src={doctor?.doctor?.picture || ""}
+                                  alt="doctor"
+                                />
+                                <div className="pl-3">
+                                  <div className="text-base font-semibold">
+                                    {doctor?.doctor?.name}
+                                  </div>
+                                  <div className="font-normal text-gray-500">
+                                    {doctor?.doctor?.specialization}
                                   </div>
                                 </div>
-                              ) : (
-                                <div>
-                                  <svg
-                                    aria-hidden="true"
-                                    className="w-8 h-8 mr-2 text-gray-200 animate-spin dark:text-gray-600 fill-blue-600"
-                                    viewBox="0 0 100 101"
-                                    fill="none"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                  >
-                                    <path
-                                      d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
-                                      fill="currentColor"
-                                    />
-                                    <path
-                                      d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
-                                      fill="currentFill"
-                                    />
-                                  </svg>
-                                  <span className="sr-only">Loading...</span>
-                                </div>
+                              </div>
+                            ) : (
+                              <div>
+                                <svg
+                                  aria-hidden="true"
+                                  className="w-8 h-8 mr-2 text-gray-200 animate-spin dark:text-gray-600 fill-blue-600"
+                                  viewBox="0 0 100 101"
+                                  fill="none"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                >
+                                  <path
+                                    d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
+                                    fill="currentColor"
+                                  />
+                                  <path
+                                    d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
+                                    fill="currentFill"
+                                  />
+                                </svg>
+                                <span className="sr-only">Loading...</span>
+                              </div>
+                            )}
+                          </td>
+                          <td className="px-6 py-4">
+                            <p className="font-medium ">
+                              {new Date(doctor?.slot?.date).toLocaleDateString(
+                                "en-GB"
                               )}
-                            </td>
-                            <td className="px-6 py-4">
-                              <p className="font-medium ">
-                                {doctor?.contactNumber}
-                              </p>
-                            </td>
-                            <td className="px-6 py-4">
-                              <a
-                                href={`./Appointment/${doctor._id}`}
-                                className="font-medium text-blue-600 dark:text-blue-500 hover:underline"
-                              >
-                                Đặt lịch khám
-                              </a>
-                            </td>
-                          </tr>
-                        ))} */}
+                            </p>
+                          </td>
+                          <td className="px-6 py-4">
+                            <p className="font-medium ">
+                              {new Date(
+                                doctor?.slot?.startTime
+                              ).toLocaleTimeString()}{" "}
+                              -{" "}
+                              {new Date(
+                                doctor?.slot?.endTime
+                              ).toLocaleTimeString()}
+                            </p>
+                          </td>
+                          <td className="px-6 py-4">
+                            <a
+                              href={`/AppointmentInformation/${doctor?.code}`}
+                              className="font-medium text-blue-600 dark:text-blue-500 hover:underline"
+                            >
+                              Xem
+                            </a>
+                          </td>
+                        </tr>
+                      ))}
                     </tbody>
                   </table>
+                  <nav aria-label="Page navigation example">
+                    <ul className="flex items-center -space-x-px h-10 text-base">
+                      <li>
+                        <button
+                          className={`block px-4 h-10 ml-0 leading-tight text-gray-500 bg-white border border-gray-300 rounded-l-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white ${
+                            currentPage === 1
+                              ? "cursor-not-allowed opacity-50"
+                              : ""
+                          }`}
+                          onClick={() => {
+                            if (currentPage !== 1) {
+                              paginate(currentPage - 1);
+                            }
+                          }}
+                          disabled={currentPage === 1}
+                        >
+                          <span className="sr-only">Previous</span>
+                          <svg
+                            className="w-3 h-3"
+                            aria-hidden="true"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 6 10"
+                          >
+                            <path
+                              stroke="currentColor"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M5 1 1 5l4 4"
+                            />
+                          </svg>
+                        </button>
+                      </li>
+                      {Array.from(Array(totalPages), (e, i) => {
+                        const pageNumber = i + 1;
+                        return (
+                          <li key={i}>
+                            <button
+                              className={`${
+                                pageNumber === currentPage
+                                  ? "z-10 flex items-center justify-center px-4 h-10 leading-tight text-blue-600 border border-blue-300 bg-blue-50 hover:bg-blue-100 hover:text-blue-700 dark:border-gray-700 dark:bg-gray-700 dark:text-white"
+                                  : "flex items-center justify-center px-4 h-10 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
+                              }`}
+                              onClick={() => paginate(pageNumber)}
+                            >
+                              {pageNumber}
+                            </button>
+                          </li>
+                        );
+                      })}
+                      <li>
+                        <button
+                          className={`block px-4 h-10 mr-0 leading-tight text-gray-500 bg-white border border-gray-300 rounded-r-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white ${
+                            currentPage === totalPages
+                              ? "cursor-not-allowed opacity-50"
+                              : ""
+                          }`}
+                          onClick={() => {
+                            if (currentPage !== totalPages) {
+                              paginate(currentPage + 1);
+                            }
+                          }}
+                          disabled={currentPage === totalPages}
+                        >
+                          <span className="sr-only">Next</span>
+                          <svg
+                            className="w-3 h-3"
+                            aria-hidden="true"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 6 10"
+                          >
+                            <path
+                              stroke="currentColor"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="m1 9 4-4-4-4"
+                            />
+                          </svg>
+                        </button>
+                      </li>
+                    </ul>
+                  </nav>
                 </div>
               </div>
             </div>

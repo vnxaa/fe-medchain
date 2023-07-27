@@ -24,6 +24,21 @@ const Dashboard = () => {
   const [doctorId, setDoctorId] = useState(null);
   const [bookingRates, setBookingRates] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [mintedRecords, setMintedRecords] = useState([]);
+  const [draftRecords, setDraftRecords] = useState([]);
+  const [rejectRecords, setRejectRecords] = useState([]);
+  const [patientGenderCounts, setPatientGenderCounts] = useState(null);
+  const fetchPatienGenderData = async () => {
+    try {
+      const response = await axios.get(
+        `${process.env.service}/api/accountRequest/patient/gender-counts`
+      );
+      console.log(response.data);
+      setPatientGenderCounts(response.data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
   // Function to fetch booking rates for a specific doctor
   const fetchBookingRateForDoctor = async (doctorId) => {
     try {
@@ -38,7 +53,25 @@ const Dashboard = () => {
       setLoading(false);
     }
   };
+  const getMedicalRecordsByDoctorId = async (doctorId) => {
+    try {
+      // Make the GET request to the API endpoint
+      const response = await axios.get(
+        `${process.env.service}/api/medicalRecord/doctor/${doctorId}`
+      );
 
+      // Extract the medical records from the response data
+      // const medicalRecords = response.data;
+
+      setMintedRecords(response.data.mintedRecords.length);
+      setDraftRecords(response.data.draftRecords.length);
+      setRejectRecords(response.data.rejectRecords.length);
+      // Process the medical records as needed
+    } catch (error) {
+      // Handle any errors that occurred during the API call
+      console.error("Error:", error.message);
+    }
+  };
   useEffect(() => {
     // Get the token from localStorage
     const token = localStorage.getItem("token");
@@ -69,11 +102,13 @@ const Dashboard = () => {
 
       console.log("Token not found. Please log in.");
     }
+    fetchPatienGenderData();
   }, [router]);
   // Calculate the booking rate for a specific doctor
   useEffect(() => {
     if (doctorId) {
       fetchBookingRateForDoctor(doctorId);
+      getMedicalRecordsByDoctorId(doctorId);
     }
   }, [doctorId]);
 
@@ -147,13 +182,13 @@ const Dashboard = () => {
 
   // Dữ liệu cho biểu đồ cột
   const dataBar = {
-    labels: ["Đã tạo", "Phê duyệt", "Bị từ chối"],
+    labels: ["Chờ duyệt", "Được duyệt", "Bị từ chối"],
     datasets: [
       {
         backgroundColor: ["#3B82F6", "#34D399", "#EF4444"],
         borderColor: "rgba(0,0,0,1)",
         borderWidth: 1,
-        data: [40, 30, 24],
+        data: [draftRecords, mintedRecords, rejectRecords],
       },
     ],
   };
@@ -195,7 +230,7 @@ const Dashboard = () => {
   };
 
   const dataRadar = {
-    labels: ["0-2", "3-6", "7-10", "11-14"],
+    labels: ["0-2 tuổi", "3-6 tuổi", "7-10 tuổi", "11-14 tuổi"],
     datasets: [
       {
         label: "Nam",
@@ -205,7 +240,7 @@ const Dashboard = () => {
         pointBorderColor: "#fff",
         pointHoverBackgroundColor: "#fff",
         pointHoverBorderColor: "rgba(54, 162, 235, 1)",
-        data: [30, 25, 20, 18],
+        data: patientGenderCounts?.male,
       },
       {
         label: "Nữ",
@@ -215,7 +250,7 @@ const Dashboard = () => {
         pointBorderColor: "#fff",
         pointHoverBackgroundColor: "#fff",
         pointHoverBorderColor: "rgba(255, 99, 132, 1)",
-        data: [25, 20, 22, 30],
+        data: patientGenderCounts?.female,
       },
     ],
   };
@@ -225,7 +260,7 @@ const Dashboard = () => {
       ticks: {
         beginAtZero: true,
         stepSize: 10,
-        max: 40,
+        precision: 0,
       },
     },
   };

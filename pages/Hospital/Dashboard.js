@@ -1,3 +1,4 @@
+import axios from "axios";
 import {
   ArcElement,
   BarElement,
@@ -13,11 +14,119 @@ import {
 } from "chart.js";
 import jwt_decode from "jwt-decode";
 import { useRouter } from "next/router";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Bar, Pie, Radar } from "react-chartjs-2";
 import Navigation from "../Common/Navigation";
 const Dashboard = () => {
   const router = useRouter();
+  const [mintedRecords, setMintedRecords] = useState([]);
+  const [draftRecords, setDraftRecords] = useState([]);
+  const [rejectRecords, setRejectRecords] = useState([]);
+  const [staffCount, setStaffCount] = useState(0);
+  const [patientCount, setPatientCount] = useState(0);
+  const [doctorCount, setDoctorCount] = useState(0);
+
+  const [doctorPendingCount, setDoctorPendingCount] = useState(0);
+  const [doctorApprovedCount, setDoctorApprovedCount] = useState(0);
+  const [doctorRejectedCount, setDoctorRejectedCount] = useState(0);
+
+  const [staffPendingCount, setStaffPendingCount] = useState(0);
+  const [staffApprovedCount, setStaffApprovedCount] = useState(0);
+  const [staffRejectedCount, setStaffRejectedCount] = useState(0);
+  const [patientGenderCounts, setPatientGenderCounts] = useState(null);
+  const [doctorGenderCounts, setDoctorGenderCounts] = useState(null);
+  const [staffGenderCounts, setStaffGenderCounts] = useState(null);
+  const fetchGenderCounts = async () => {
+    try {
+      const response = await axios.get(
+        `${process.env.service}/api/accountRequest/staff/gender-counts`
+      );
+
+      // Update the state with the data received from the API
+      setStaffGenderCounts(response.data);
+    } catch (error) {
+      console.error("Error:", error.message);
+    }
+  };
+  const getDoctorGenderCounts = async () => {
+    try {
+      const response = await axios.get(
+        `${process.env.service}/api/accountRequest/doctor/gender-counts`
+      );
+      setDoctorGenderCounts(response.data);
+    } catch (error) {
+      console.error("Error:", error.message);
+    }
+  };
+  const fetchPatienGenderData = async () => {
+    try {
+      const response = await axios.get(
+        `${process.env.service}/api/accountRequest/patient/gender-counts`
+      );
+      console.log(response.data);
+      setPatientGenderCounts(response.data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+  const getStaffAccountRequestStatistics = async () => {
+    try {
+      const response = await axios.get(
+        `${process.env.service}/api/accountRequest/total/staff-account`
+      );
+
+      const { pendingCount, approvedCount, rejectedCount } = response.data;
+      setStaffPendingCount(pendingCount);
+      setStaffApprovedCount(approvedCount);
+      setStaffRejectedCount(rejectedCount);
+    } catch (error) {
+      console.error("Error:", error.message);
+    }
+  };
+  const getDoctorAccountRequestStatistics = async () => {
+    try {
+      const response = await axios.get(
+        `${process.env.service}/api/accountRequest/total/doctor-account`
+      );
+
+      const { pendingCount, approvedCount, rejectedCount } = response.data;
+      setDoctorPendingCount(pendingCount);
+      setDoctorApprovedCount(approvedCount);
+      setDoctorRejectedCount(rejectedCount);
+    } catch (error) {
+      console.error("Error:", error.message);
+    }
+  };
+  const getTotalUserCounts = async () => {
+    try {
+      // Make the GET request to the API endpoint
+      const response = await axios.get(
+        `${process.env.service}/api/accountRequest/total/user`
+      );
+
+      // Handle the response data
+      const { staffCount, patientCount, doctorCount } = response.data;
+
+      setStaffCount(staffCount);
+      setPatientCount(patientCount);
+      setDoctorCount(doctorCount);
+    } catch (error) {
+      console.error("Error:", error.message);
+    }
+  };
+  const getMedicalRecordStatistics = async () => {
+    try {
+      const response = await axios.get(
+        `${process.env.service}/api/medicalRecord/hospital/statistics`
+      );
+
+      setMintedRecords(response.data.mintedRecords.length);
+      setDraftRecords(response.data.draftRecords.length);
+      setRejectRecords(response.data.rejectRecords.length);
+    } catch (error) {
+      console.error(error);
+    }
+  };
   Chart.register(
     LineElement,
     PointElement,
@@ -58,6 +167,13 @@ const Dashboard = () => {
 
       console.log("Token not found. Please log in.");
     }
+    getMedicalRecordStatistics();
+    getTotalUserCounts();
+    getDoctorAccountRequestStatistics();
+    getStaffAccountRequestStatistics();
+    fetchPatienGenderData();
+    getDoctorGenderCounts();
+    fetchGenderCounts();
   }, [router]);
   const dataBar = {
     labels: ["Bác sĩ", "Bệnh nhân", "Nhân viên"], // Update the labels to match the data
@@ -66,7 +182,7 @@ const Dashboard = () => {
         backgroundColor: ["#34D399", "#EF4444", "#F59E0B"], // Remove the color for "Users"
         borderColor: "rgba(0,0,0,1)",
         borderWidth: 1,
-        data: [50, 100, 80], // Replace these numbers with actual data for "Doctors," "Patients," and "Staff"
+        data: [doctorCount, patientCount, staffCount], // Replace these numbers with actual data for "Doctors," "Patients," and "Staff"
       },
     ],
   };
@@ -75,9 +191,8 @@ const Dashboard = () => {
     scales: {
       x: {
         beginAtZero: true,
-        max: 200, // Set the maximum value for the x-axis
         ticks: {
-          stepSize: 20, // Set the step size for the x-axis
+          stepSize: 1, // Set the step size for the x-axis
         },
       },
     },
@@ -99,18 +214,39 @@ const Dashboard = () => {
     responsive: true, // Enable responsiveness
   };
 
-  const dataBarRecords = {
-    labels: ["Đã phê duyệt", "Đang chờ", "Từ chối"],
+  const dataBarMedicalRecords = {
+    labels: ["Đã duyệt", "Chờ duyệt", "Từ chối"],
     datasets: [
       {
         backgroundColor: ["#34D399", "#F59E0B", "#EF4444"],
         borderColor: "rgba(0, 0, 0, 1)",
         borderWidth: 1,
-        data: [50, 30, 20], // Replace these numbers with actual data
+        data: [mintedRecords, draftRecords, rejectRecords], // Replace these numbers with actual data
       },
     ],
   };
-
+  const dataBarDoctorAccount = {
+    labels: ["Đã duyệt", "Chờ duyệt", "Từ chối"],
+    datasets: [
+      {
+        backgroundColor: ["#34D399", "#F59E0B", "#EF4444"],
+        borderColor: "rgba(0, 0, 0, 1)",
+        borderWidth: 1,
+        data: [doctorApprovedCount, doctorPendingCount, doctorRejectedCount], // Replace these numbers with actual data
+      },
+    ],
+  };
+  const dataBarStaffAccount = {
+    labels: ["Đã duyệt", "Chờ duyệt", "Từ chối"],
+    datasets: [
+      {
+        backgroundColor: ["#34D399", "#F59E0B", "#EF4444"],
+        borderColor: "rgba(0, 0, 0, 1)",
+        borderWidth: 1,
+        data: [staffApprovedCount, staffPendingCount, staffRejectedCount], // Replace these numbers with actual data
+      },
+    ],
+  };
   const dataDoughnut = {
     labels: [
       "Số bệnh nhân mắc tim bẩm sinh",
@@ -142,12 +278,12 @@ const Dashboard = () => {
       ticks: {
         beginAtZero: true,
         stepSize: 10,
-        max: 40,
+        precision: 0,
       },
     },
   };
-  const dataRadar = {
-    labels: ["0-2", "3-6", "7-10", "11-14"],
+  const dataRadarPatient = {
+    labels: ["0-2 tuổi", "3-6 tuổi", "7-10 tuổi", "11-14 tuổi"],
     datasets: [
       {
         label: "Nam",
@@ -157,7 +293,7 @@ const Dashboard = () => {
         pointBorderColor: "#fff",
         pointHoverBackgroundColor: "#fff",
         pointHoverBorderColor: "rgba(54, 162, 235, 1)",
-        data: [30, 25, 20, 18],
+        data: patientGenderCounts?.male,
       },
       {
         label: "Nữ",
@@ -167,59 +303,71 @@ const Dashboard = () => {
         pointBorderColor: "#fff",
         pointHoverBackgroundColor: "#fff",
         pointHoverBorderColor: "rgba(255, 99, 132, 1)",
-        data: [25, 20, 22, 30],
+        data: patientGenderCounts?.female,
       },
     ],
   };
 
   const dataRadarDoctor = {
-    labels: ["18-25", "26-35", "36-45", "46-55", "56-60"],
+    labels: [
+      "18-25 tuổi",
+      "26-35 tuổi",
+      "36-45 tuổi",
+      "46-55 tuổi",
+      "56-60 tuổi",
+    ],
     datasets: [
       {
-        label: "Male",
+        label: "Nam",
         backgroundColor: "rgba(54, 162, 235, 0.2)",
         borderColor: "rgba(54, 162, 235, 1)",
         pointBackgroundColor: "rgba(54, 162, 235, 1)",
         pointBorderColor: "#fff",
         pointHoverBackgroundColor: "#fff",
         pointHoverBorderColor: "rgba(54, 162, 235, 1)",
-        data: [15, 25, 30, 20, 10], // Replace these numbers with actual data for male employees aged 18-60
+        data: doctorGenderCounts?.male, // Replace these numbers with actual data for male employees aged 18-60
       },
       {
-        label: "Female",
+        label: "Nữ",
         backgroundColor: "rgba(255, 99, 132, 0.2)",
         borderColor: "rgba(255, 99, 132, 1)",
         pointBackgroundColor: "rgba(255, 99, 132, 1)",
         pointBorderColor: "#fff",
         pointHoverBackgroundColor: "#fff",
         pointHoverBorderColor: "rgba(255, 99, 132, 1)",
-        data: [10, 20, 15, 25, 5], // Replace these numbers with actual data for female employees aged 18-60
+        data: doctorGenderCounts?.female, // Replace these numbers with actual data for female employees aged 18-60
       },
     ],
   };
 
   const dataRadarStaff = {
-    labels: ["18-25", "26-35", "36-45", "46-55", "56-60"],
+    labels: [
+      "18-25 tuổi",
+      "26-35 tuổi",
+      "36-45 tuổi",
+      "46-55 tuổi",
+      "56-60 tuổi",
+    ],
     datasets: [
       {
-        label: "Male",
+        label: "Nam",
         backgroundColor: "rgba(54, 162, 235, 0.2)",
         borderColor: "rgba(54, 162, 235, 1)",
         pointBackgroundColor: "rgba(54, 162, 235, 1)",
         pointBorderColor: "#fff",
         pointHoverBackgroundColor: "#fff",
         pointHoverBorderColor: "rgba(54, 162, 235, 1)",
-        data: [12, 22, 28, 18, 8], // Replace these numbers with actual data for male staff members aged 18-60
+        data: staffGenderCounts?.male, // Replace these numbers with actual data for male staff members aged 18-60
       },
       {
-        label: "Female",
+        label: "Nữ",
         backgroundColor: "rgba(255, 99, 132, 0.2)",
         borderColor: "rgba(255, 99, 132, 1)",
         pointBackgroundColor: "rgba(255, 99, 132, 1)",
         pointBorderColor: "#fff",
         pointHoverBackgroundColor: "#fff",
         pointHoverBorderColor: "rgba(255, 99, 132, 1)",
-        data: [8, 15, 10, 20, 5], // Replace these numbers with actual data for female staff members aged 18-60
+        data: staffGenderCounts?.female, // Replace these numbers with actual data for female staff members aged 18-60
       },
     ],
   };
@@ -251,7 +399,10 @@ const Dashboard = () => {
                       Thống kê yêu cầu cấp tài khoản bác sĩ
                     </h5>
                     <div style={{ textAlign: "center" }}>
-                      <Bar data={dataBarRecords} options={optionsDataBar} />
+                      <Bar
+                        data={dataBarDoctorAccount}
+                        options={optionsDataBar}
+                      />
                     </div>
                   </div>
                 </div>
@@ -263,7 +414,10 @@ const Dashboard = () => {
                       Thống kê bệnh án
                     </h5>
                     <div style={{ textAlign: "center" }}>
-                      <Bar data={dataBarRecords} options={optionsDataBar} />
+                      <Bar
+                        data={dataBarMedicalRecords}
+                        options={optionsDataBar}
+                      />
                     </div>
                   </div>
                 </div>
@@ -273,7 +427,10 @@ const Dashboard = () => {
                       Thống kê yêu cầu cấp tài khoản nhân viên
                     </h5>
                     <div style={{ textAlign: "center" }}>
-                      <Bar data={dataBarRecords} options={optionsDataBar} />
+                      <Bar
+                        data={dataBarStaffAccount}
+                        options={optionsDataBar}
+                      />
                     </div>
                   </div>
                 </div>
@@ -285,7 +442,7 @@ const Dashboard = () => {
                       <span className="mr-2">Thống kê bệnh nhân</span>
                     </h5>
                     <div className="h-[350px] flex items-center justify-center">
-                      <Radar data={dataRadar} options={optionsRadar} />
+                      <Radar data={dataRadarPatient} options={optionsRadar} />
                     </div>
                   </div>
                 </div>
