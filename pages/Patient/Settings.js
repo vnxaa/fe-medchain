@@ -82,6 +82,7 @@ const Settings = () => {
         } else {
           // User is not a patient, redirect to another page or show an error message
           console.log("Access denied. User is not a patient");
+          router.push("../Common/Permission");
         }
       } catch (error) {
         // Handle decoding error

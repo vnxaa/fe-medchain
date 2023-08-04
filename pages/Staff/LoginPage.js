@@ -1,7 +1,9 @@
+import { faHeartbeat } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import axios from "axios";
+import Link from "next/link";
 import { useRouter } from "next/router";
 import React, { useState } from "react";
-
 const LoginPage = () => {
   const router = useRouter();
   const [username, setUsername] = useState("");
@@ -47,17 +49,24 @@ const LoginPage = () => {
   return (
     <div>
       <section className="bg-gray-50 dark:bg-gray-900">
-        <div className="flex flex-col items-center justify-center px-6 py-8 mx-auto md:h-screen lg:py-0">
-          <a
-            href="#"
-            className="flex items-center mb-6 text-2xl font-semibold text-gray-900 dark:text-white"
-          >
-            <img
-              className="w-8 h-8 mr-2"
-              src="https://flowbite.s3.amazonaws.com/blocks/marketing-ui/logo.svg"
-              alt="logo"
-            />
-            Medchain
+        <div className="flex flex-col  items-center justify-center px-6 py-8 mx-auto md:h-screen lg:py-0">
+          <a href="#" className="flex mb-2 items-center">
+            <div className="h-8 mr-1">
+              <div className="">
+                <div className="font-normal text-gray-500">
+                  <FontAwesomeIcon
+                    icon={faHeartbeat}
+                    size="2x"
+                    className="mr-2 text-blue-500"
+                  />
+                </div>
+              </div>
+            </div>
+            <span className="self-center  text-2xl font-bold whitespace-nowrap dark:text-white">
+              <span className="text-transparent bg-clip-text bg-gradient-to-bl from-purple-600 to-blue-500 hover:bg-gradient-to-bl">
+                Medchain
+              </span>
+            </span>
           </a>
           <div className="w-full bg-white rounded-lg shadow dark:border md:mt-0 sm:max-w-md xl:p-0 dark:bg-gray-800 dark:border-gray-700">
             <div className="p-6 space-y-4 md:space-y-6 sm:p-8">
@@ -101,7 +110,7 @@ const LoginPage = () => {
                     required
                   />
                 </div>
-                {/* <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between">
                   <div className="flex items-start">
                     <div className="flex items-center h-5">
                       <input
@@ -109,7 +118,6 @@ const LoginPage = () => {
                         aria-describedby="remember"
                         type="checkbox"
                         className="w-4 h-4 border border-gray-300 rounded bg-gray-50 focus:ring-3 focus:ring-primary-300 dark:bg-gray-700 dark:border-gray-600 dark:focus:ring-primary-600 dark:ring-offset-gray-800"
-                        required
                       />
                     </div>
                     <div className="ml-3 text-sm">
@@ -117,17 +125,14 @@ const LoginPage = () => {
                         htmlFor="remember"
                         className="text-gray-500 dark:text-gray-300"
                       >
-                        Remember me
+                        Ghi nhớ
                       </label>
                     </div>
                   </div>
-                  <a
-                    href="#"
-                    className="text-sm font-medium text-primary-600 hover:underline dark:text-primary-500"
-                  >
-                    Quên mật khẩu
-                  </a>
-                </div> */}
+                  <div className="text-sm font-medium text-primary-600 hover:underline dark:text-primary-500">
+                    <Link href="/ForgotPassword/Reset">Quên mật khẩu</Link>
+                  </div>
+                </div>
                 <button
                   type="submit"
                   // onClick={handleLogin}

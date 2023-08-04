@@ -177,9 +177,9 @@ const AppointmentRequests = () => {
           // User is a patient, allow access to the patient page
           console.log("Access granted to staff page");
         } else {
-          router.push("/Staff/LoginPage");
           // User is not a patient, redirect to another page or show an error message
           console.log("Access denied. User is not a staff");
+          router.push("../Common/Permission");
         }
       } catch (error) {
         // Handle decoding error

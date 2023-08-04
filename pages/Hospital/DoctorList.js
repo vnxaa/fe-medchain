@@ -38,6 +38,7 @@ const DoctorList = () => {
         } else {
           // User is not a hospital, redirect to another page or show an error message
           console.log("Access denied. User is not a hospital");
+          router.push("../Common/Permission");
         }
       } catch (error) {
         // Handle decoding error

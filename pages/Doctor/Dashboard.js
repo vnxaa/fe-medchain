@@ -13,7 +13,6 @@ import {
   Tooltip,
 } from "chart.js";
 import ChartDataLabels from "chartjs-plugin-datalabels";
-
 import jwt_decode from "jwt-decode";
 import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
@@ -33,7 +32,7 @@ const Dashboard = () => {
       const response = await axios.get(
         `${process.env.service}/api/accountRequest/patient/gender-counts`
       );
-      console.log(response.data);
+      // console.log(response.data);
       setPatientGenderCounts(response.data);
     } catch (error) {
       console.error(error);
@@ -91,6 +90,7 @@ const Dashboard = () => {
         } else {
           // User is not a doctor, redirect to another page or show an error message
           console.log("Access denied. User is not a doctor");
+          router.push("../Common/Permission");
         }
       } catch (error) {
         // Handle decoding error

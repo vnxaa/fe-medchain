@@ -179,6 +179,8 @@ const Navigation = () => {
                       ? "/Hospital/LoginPage"
                       : role === "patient"
                       ? "/Patient/LoginPage"
+                      : role === "staff"
+                      ? "/Staff/LoginPage"
                       : ""
                   }
                   className="block px-4 py-2 text-sm text-gray-700 text-red-700 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white"
@@ -480,7 +482,11 @@ const Navigation = () => {
                         : "text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 dark:text-white md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent dark:border-gray-700"
                     }`}
                   >
-                    <Link href="/CheckAppointment">Tra phiếu khám</Link>
+                    <Link href="/CheckAppointment">
+                      <a target="_blank" rel="noopener noreferrer">
+                        Tra phiếu khám
+                      </a>
+                    </Link>
                   </div>
                 </li>
               </>
@@ -534,7 +540,11 @@ const Navigation = () => {
                         : "text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 dark:text-white md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent dark:border-gray-700"
                     }`}
                   >
-                    <Link href="/CheckAppointment">Tra phiếu khám</Link>
+                    <Link href="/CheckAppointment">
+                      <a target="_blank" rel="noopener noreferrer">
+                        Tra phiếu khám
+                      </a>
+                    </Link>
                   </div>
                 </li>
               </>

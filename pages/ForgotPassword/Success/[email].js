@@ -17,8 +17,7 @@ const Success = () => {
             Gửi yêu cầu thành công
           </h5>
           <p className="mb-5text-base text-gray-500 sm:text-lg dark:text-gray-400">
-            Bạn sẽ nhận được phản hồi qua email {email}
-            khi tài khoản được phê duyệt thành công.
+            Mật khẩu mới đã được gửi qua email {email}
           </p>
           <div className="items-center justify-center space-y-4 sm:flex sm:space-y-0 sm:space-x-4">
             <div className="flex mt-3 flex-col space-y-4 sm:flex-row sm:justify-center sm:space-y-0 sm:space-x-4">
