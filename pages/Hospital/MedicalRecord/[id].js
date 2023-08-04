@@ -165,21 +165,26 @@ const MedicalRecord = () => {
         patientInfo.walletAddress,
         tokenUrl
       );
+      // console.log(hash.hash);
+      // Wait for the transaction receipt
+      const receipt = await provider.waitForTransaction(hash.hash);
+      // console.log(receipt.status);
 
-      if (hash) {
+      if (receipt.status === 1) {
         updateMedicalRecordStatus(id, "minted");
         setMedicalRecords((prevState) => ({
           ...prevState,
           status: "minted",
         }));
+        setSuccess(true);
+        // setError(null);
+      } else {
+        setSuccess(false);
       }
-
-      setSuccess(true);
-      setError(null);
     } catch (error) {
       console.log(error);
       setSuccess(false);
-      setError(error.response.data);
+      // setError(error.response.data);
     } finally {
       setLoading(false);
     }

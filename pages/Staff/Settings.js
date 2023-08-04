@@ -57,6 +57,9 @@ const Settings = () => {
       setSuccess(true);
       // Handle the response from the API
       console.log("Password updated successfully:", response.data);
+      setTimeout(() => {
+        router.push("/Staff/LoginPage");
+      }, 2000);
       // You can also show a success message to the user or redirect them to another page
     } catch (err) {
       console.error("Error updating password:", err);
@@ -83,6 +86,7 @@ const Settings = () => {
         email,
         birthday: selectedDate,
       };
+      console.log(formData);
       // Make the API call using Axios
       const response = await axios.put(
         `${process.env.service}/api/staff/${staffId}`,
@@ -94,8 +98,9 @@ const Settings = () => {
       setSuccess(true);
       // Handle the response from the API
       console.log("Updated staff information:", response.data);
-      setError(err.response.data);
-      setSuccess(false);
+      setTimeout(() => {
+        router.push("/Staff/LoginPage");
+      }, 2000);
       // You can also show a success message to the user or redirect them to another page
     } catch (err) {
       console.error("Error updating staff information:", err);
@@ -148,6 +153,7 @@ const Settings = () => {
     setPhoneNumber(staffInfo?.contactNumber || "");
     setCitizenId(staffInfo?.citizenId || "");
     setEmail(staffInfo?.email || "");
+    setSelectedDate(staffInfo?.birthday || "");
   }, [staffInfo]);
   const handleUpdateStaffPicture = async (event) => {
     // Your logic to handle the file upload goes here
@@ -172,6 +178,9 @@ const Settings = () => {
         console.log("Picture update success:", response.data);
         localStorage.setItem("token", response.data.token);
         setSuccessPic(true);
+        setTimeout(() => {
+          router.push("/Staff/LoginPage");
+        }, 2000);
         // Perform any additional actions or updates after successful picture update
       })
       .catch((error) => {

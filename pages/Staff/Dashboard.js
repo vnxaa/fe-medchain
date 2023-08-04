@@ -202,7 +202,7 @@ const Dashboard = () => {
                       </span>
                     </h5>
 
-                    <div style={{ textAlign: "center" }}>
+                    <div className="h-[368px] flex items-center justify-center">
                       <Line
                         data={data}
                         options={options}
@@ -214,7 +214,7 @@ const Dashboard = () => {
               </div>
               <div className="grid grid-cols-2 grid-rows-2">
                 <div className=" h-fit col-span-2">
-                  <div className="max-w h-fit p-2 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                  <div className="max-w h-fit p-6 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
                     <h5 className="text-lg lg:text-xl flex mt-1 font-bold mb-5 text-gray-900 dark:text-white">
                       Thống kê đặt khám trong tuần
                     </h5>

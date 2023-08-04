@@ -13,6 +13,7 @@ async function getNFTsByTokenId(address, tokenId) {
         orderDirection: desc
       ) {
         id
+        blockNumber
         tokenId
         from
         to

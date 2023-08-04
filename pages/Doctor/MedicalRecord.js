@@ -11,6 +11,9 @@ const MedicalRecord = () => {
   const [statusFilter, setStatusFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [accountsPerPage] = useState(5);
+  const [totalPages, setTotalPages] = useState(0);
+  const [currentMedicalRecords, setCurrentMedicalRecords] = useState([]);
+
   const fetchMedicalRecords = useCallback(async () => {
     try {
       const response = await axios.get(
@@ -123,15 +126,47 @@ const MedicalRecord = () => {
     const age = currentYear - birthYear;
     return age;
   };
-  // Calculate total number of pages
-  const totalPages = Math.ceil(medicalRecords.length / accountsPerPage);
+  useEffect(() => {
+    // Calculate total number of pages
+    const newTotalPages = Math.ceil(medicalRecords.length / accountsPerPage);
+    setTotalPages(newTotalPages);
 
-  // Get current accounts based on pagination
-  const indexOfLast = currentPage * accountsPerPage;
-  const indexOfFirst = indexOfLast - accountsPerPage;
-  const currentMedicalRecords = medicalRecords.slice(indexOfFirst, indexOfLast);
-  // Update current page
+    // Get current records based on pagination
+    const indexOfLast = currentPage * accountsPerPage;
+    const indexOfFirst = indexOfLast - accountsPerPage;
+    const newCurrentMedicalRecords = medicalRecords.slice(
+      indexOfFirst,
+      indexOfLast
+    );
+    setCurrentMedicalRecords(newCurrentMedicalRecords);
+  }, [medicalRecords, currentPage, accountsPerPage]);
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+  const filterSearch = (searchTerm) => {
+    const filteredRecords = medicalRecords.filter((record) => {
+      const patientName = patientInfo[record.patientId]?.name || "";
+      const doctorName = doctorInfo[record.doctorId]?.name || "";
+      return (
+        patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        doctorName.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    });
+
+    // Calculate total number of pages
+    const newTotalPages = Math.ceil(filteredRecords.length / accountsPerPage);
+    setTotalPages(newTotalPages);
+
+    // Get current records based on pagination
+    const indexOfLast = currentPage * accountsPerPage;
+    const indexOfFirst = indexOfLast - accountsPerPage;
+    const newCurrentMedicalRecords = filteredRecords.slice(
+      indexOfFirst,
+      indexOfLast
+    );
+    setCurrentMedicalRecords(newCurrentMedicalRecords);
+    setCurrentPage(1); // Reset to the first page after filtering
+  };
+
   return (
     <div>
       <Navigation />
@@ -163,7 +198,7 @@ const MedicalRecord = () => {
                 id="table-search-users"
                 className="block p-2 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg w-80 bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                 placeholder="Tìm bệnh án"
-                onChange={(e) => filterRecords(e.target.value)}
+                onChange={(e) => filterSearch(e.target.value)}
               />
             </div>
           </div>

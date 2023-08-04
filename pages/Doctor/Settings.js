@@ -3,19 +3,39 @@ import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import jwt_decode from "jwt-decode";
 import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
+import Datepicker from "tailwind-datepicker-react";
 import { v4 } from "uuid";
 import { storage } from "../../firebase";
 import Navigation from "../Common/Navigation";
 const Settings = () => {
   const router = useRouter();
   const [doctorInfo, setDoctorInfo] = useState("");
-  const [name, setName] = useState("");
-  const [gender, setGender] = useState("");
-  const [picture, setPicture] = useState("");
-  const [birthday, setBirthday] = useState("");
+  const [fullName, setFullName] = useState("");
   const [address, setAddress] = useState("");
-  const [contactNumber, setContactNumber] = useState("");
-
+  const [gender, setGender] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [citizenId, setCitizenId] = useState("");
+  const [email, setEmail] = useState("");
+  const [activeTab, setActiveTab] = useState("password");
+  const [successPic, setSuccessPic] = useState(false);
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [repeatNewPassword, setRepeatNewPassword] = useState("");
+  const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [options, setOptions] = useState({});
+  const [show, setShow] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(null);
+  const handleDateSelect = (date) => {
+    setSelectedDate(date);
+  };
+  const handleClose = () => {
+    setShow(!show);
+  };
+  const handleTabClick = (tab) => {
+    setActiveTab(tab);
+  };
   useEffect(() => {
     // Get the token from localStorage
     const token = localStorage.getItem("token");
@@ -24,11 +44,12 @@ const Settings = () => {
       try {
         // Decode the token
         const decoded = jwt_decode(token);
-        console.log(decoded);
+        console.log(decoded?.user);
 
         // Check if the user is a doctor
         if (decoded?.user?.role === "doctor") {
           // User is a doctor, allow access to the doctor page
+          setDoctorInfo(decoded?.user);
           console.log("Access granted to doctor page");
         } else {
           // User is not a doctor, redirect to another page or show an error message
@@ -45,42 +66,35 @@ const Settings = () => {
       console.log("Token not found. Please log in.");
     }
   }, [router]);
-  const handleNameChange = (e) => {
-    setName(e.target.value);
-  };
+  useEffect(() => {
+    // Set the options with a timeout of 2 seconds
 
-  const handleGenderChange = (e) => {
-    setGender(e.target.value);
-  };
-
-  const handlePictureChange = (e) => {
-    const file = e.target.files[0]; // Get the selected file
-    setPicture(file); // Update the picture state with the file
-  };
-
-  const handleBirthdayChange = (e) => {
-    setBirthday(e.target.value);
-  };
-
-  const handleAddressChange = (e) => {
-    setAddress(e.target.value);
-  };
-
-  const handleContactNumberChange = (e) => {
-    setContactNumber(e.target.value);
-  };
-
-  const handleSpecialization = (e) => {
-    setSpecialization(e.target.value);
-  };
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
+    if (doctorInfo?.birthday !== undefined) {
+      setOptions({
+        maxDate: new Date("2030-01-01"),
+        minDate: new Date("1950-01-01"),
+        language: "vi",
+        title: "Chọn ngày sinh",
+        defaultDate: new Date(doctorInfo?.birthday),
+      });
+    }
+  }, [doctorInfo?.birthday]);
+  useEffect(() => {
+    setFullName(doctorInfo?.name || "");
+    setAddress(doctorInfo?.address || "");
+    setGender(doctorInfo?.gender || "");
+    setPhoneNumber(doctorInfo?.contactNumber || "");
+    setCitizenId(doctorInfo?.citizenId || "");
+    setEmail(doctorInfo?.email || "");
+    setSelectedDate(doctorInfo?.birthday || "");
+  }, [doctorInfo]);
+  const handleUpdateDoctorPicture = async (event) => {
+    // Your logic to handle the file upload goes here
+    const picture = event.target.files[0];
     if (!picture) {
       console.error("No file selected.");
       return;
     }
-
     const filename = `${v4()}_${picture.name}`;
     const storageRef = ref(storage, `image/doctor/${filename}`);
     const metadata = {
@@ -88,225 +102,609 @@ const Settings = () => {
     };
     await uploadBytes(storageRef, picture, metadata);
     const downloadURL = await getDownloadURL(storageRef);
-    console.log(downloadURL);
-    const token = localStorage.getItem("token");
-    const doctorId = jwt_decode(token)?.user?._id;
 
-    // Make a PUT request to update the patient's data
     axios
-      .put(`${process.env.service}/api/doctor/update/${doctorId}`, {
-        name,
-        gender,
-        picture: downloadURL,
-        birthday,
-        address,
-        contactNumber,
-      })
+      .put(
+        `${process.env.service}/api/doctor/update-picture/${doctorInfo?._id}`,
+        {
+          picture: downloadURL,
+        }
+      )
       .then((response) => {
-        console.log("Doctor data updated successfully");
-        // Optionally, you can redirect the user to another page or show a success message
-        router.push("./Profile");
+        console.log("Picture update success:", response.data);
+        localStorage.setItem("token", response.data.token);
+        setSuccessPic(true);
+        setTimeout(() => {
+          router.push("/Doctor/LoginPage");
+        }, 2000);
+        // Perform any additional actions or updates after successful picture update
       })
       .catch((error) => {
-        console.error("Failed to update patient data:", error);
-        // Handle error, show an error message to the user, etc.
+        console.error("Picture update error:", error);
+        // Handle error scenario, show error messages, etc.
       });
   };
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    // Validate the new password and repeat password match
+    if (newPassword !== repeatNewPassword) {
+      alert("Mật khẩu mới phải khớp với nhau, vui lòng nhập lại");
+      return;
+    }
+    try {
+      // Your form data to be sent in the request body
+      setLoading(true);
+      const formData = {
+        currentPassword: oldPassword,
+        newPassword,
+      };
+      // Make the API call using Axios
+      const response = await axios.put(
+        `${process.env.service}/api/doctor/update-password/${doctorInfo?._id}`,
+        formData
+      );
+      localStorage.setItem("token", response.data.token);
+      setSuccess(true);
+      // Handle the response from the API
+      console.log("Password updated successfully:", response.data);
+      setTimeout(() => {
+        router.push("/Doctor/LoginPage");
+      }, 2000);
+      // You can also show a success message to the user or redirect them to another page
+    } catch (error) {
+      console.error("Error updating password:", error);
+      setError(error.response.data);
+      setSuccess(false);
+      // Handle any errors that occurred during the API call
+      // Show an error message to the user or handle the error as needed
+    } finally {
+      setLoading(false);
+    }
+  };
+  const handleUpdateProfile = async (e) => {
+    e.preventDefault();
+    try {
+      // Your form data to be sent in the request body
+      setLoading(true);
+      const formData = {
+        name: fullName,
+        address,
+        gender,
+        contactNumber: phoneNumber,
+        citizenId,
+        email,
+        birthday: selectedDate,
+      };
+      console.log(formData);
+      // Make the API call using Axios
+      const response = await axios.put(
+        `${process.env.service}/api/doctor/${doctorInfo?._id}`,
+        formData
+      );
+
+      // Update token in localStorage
+      localStorage.setItem("token", response.data.token);
+      setSuccess(true);
+      // Handle the response from the API
+      console.log("Updated doctor information:", response.data);
+
+      setTimeout(() => {
+        router.push("/Doctor/LoginPage");
+      }, 2000);
+      // You can also show a success message to the user or redirect them to another page
+    } catch (err) {
+      console.error("Error updating doctor information:", err);
+      // Handle any errors that occurred during the API call
+      // Show an error message to the user or handle the error as needed
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div>
       <Navigation />
-      <form
-        className="sm:container  center sm:mx-auto"
-        style={{ maxWidth: "650px" }}
-        onSubmit={handleSubmit}
-      >
-        <div className="space-y-12">
-          <div className="border-b border-gray-900/10 pb-12">
-            <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
-              <div className="sm:col-span-4">
-                <label
-                  htmlFor="name"
-                  className="block text-sm font-medium leading-6 text-gray-900"
-                >
-                  Tên bác sĩ
-                </label>
-                <div className="mt-2">
-                  <div className="flex rounded-md shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-inset focus-within:ring-indigo-600 sm:max-w-md">
-                    <input
-                      required
-                      type="text"
-                      name="name"
-                      id="name"
-                      onChange={handleNameChange}
-                      className="block flex-1 border-0 bg-transparent py-1.5 pl-1 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6"
-                    />
-                  </div>
+      <div className="sm:container sm:mx-auto">
+        <div className="flex flex-wrap justify-center ">
+          <div className="">
+            <div className="sm:container mb-2 sm:mx-auto flex flex-col items-center">
+              <div className="w-40 h-62 mb-2 p-6 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                <div className="relative inline-block">
+                  {doctorInfo.picture ? (
+                    <>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        id="fileInput"
+                        onChange={handleUpdateDoctorPicture}
+                      />
+                      <img
+                        src={doctorInfo.picture}
+                        alt="doctor"
+                        className="rounded-full object-cover w-36 h-auto"
+                      />
+                      <div
+                        onClick={() => {
+                          const fileInput =
+                            document.getElementById("fileInput");
+                          fileInput.click();
+                        }}
+                        style={{ cursor: "pointer" }}
+                        className="absolute hover:bg-white hover:bg-opacity-5 top-0 h-full w-full bg-black rounded-full bg-opacity-25 flex items-center justify-center"
+                      >
+                        <svg
+                          className="w-6 h-6 text-white dark:text-white"
+                          aria-hidden="true"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 20 18"
+                        >
+                          <path
+                            stroke="currentColor"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M10 12.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"
+                          />
+                          <path
+                            stroke="currentColor"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M17 3h-2l-.447-.894A2 2 0 0 0 12.764 1H7.236a2 2 0 0 0-1.789 1.106L5 3H3a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V5a2 2 0 0 0-2-2Z"
+                          />
+                        </svg>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div role="status">
+                        <svg
+                          aria-hidden="true"
+                          className="inline w-8 h-8 mr-2 text-gray-200 animate-spin dark:text-gray-600 fill-blue-600"
+                          viewBox="0 0 100 101"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
+                            fill="currentColor"
+                          />
+                          <path
+                            d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
+                            fill="currentFill"
+                          />
+                        </svg>
+                        <span className="sr-only">Loading...</span>
+                      </div>
+                    </>
+                  )}
                 </div>
-              </div>
-              <div className="sm:col-span-3">
-                <label
-                  htmlFor="gender"
-                  className="block text-sm font-medium leading-6 text-gray-900"
-                >
-                  Giới tính
-                </label>
-                <div className="mt-2">
-                  <select
-                    required
-                    id="gender"
-                    name="gender"
-                    defaultValue={"DEFAULT"}
-                    onChange={handleGenderChange}
-                    className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
-                  >
-                    <option value="DEFAULT" disabled>
-                      Chọn giới tính
-                    </option>
-                    <option value={"nam"}>Nam</option>
-                    <option value={"nữ"}>Nữ</option>
-                  </select>
-                </div>
-              </div>
+                <p className="font-medium text-center ">{doctorInfo?.name}</p>
 
-              <div className="sm:col-span-4">
-                <label
-                  htmlFor="cover-photo"
-                  className="block text-sm font-medium leading-6 text-gray-900"
+                <p
+                  style={{ wordWrap: "break-word" }}
+                  className="text-center mb-2 font-light italic"
                 >
-                  Ảnh
-                </label>
-                {picture && (
+                  @{doctorInfo?.username}
+                </p>
+                <div className="flex items-center justify-center">
+                  <span className="bg-blue-100 text-blue-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-full dark:bg-blue-900 dark:text-blue-300">
+                    Bác sĩ
+                  </span>
+                </div>
+              </div>
+              {successPic && (
+                <>
                   <div
-                    id="toast-default"
-                    className="flex items-center w-full max-w-xs p-4 text-gray-500 bg-white rounded-lg shadow dark:text-gray-400 dark:bg-gray-800"
+                    className="flex items-center p-4 mb-4 text-sm text-green-800 border border-green-300 rounded-lg bg-green-50 dark:bg-gray-800 dark:text-green-400 dark:border-green-800"
                     role="alert"
                   >
-                    <div className="ml-3 text-sm font-normal">
-                      {picture && <p>Uploaded Picture: {picture.name}</p>}
-                    </div>
-                  </div>
-                )}
-
-                <div className="mt-2 flex justify-center rounded-lg border border-dashed border-gray-900/25 px-6 py-10">
-                  <div className="text-center">
                     <svg
-                      className="mx-auto h-12 w-12 text-gray-300"
-                      viewBox="0 0 24 24"
-                      fill="currentColor"
+                      className="flex-shrink-0 inline w-4 h-4 mr-3"
                       aria-hidden="true"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
                     >
-                      <path
-                        fillRule="evenodd"
-                        d="M1.5 6a2.25 2.25 0 012.25-2.25h16.5A2.25 2.25 0 0122.5 6v12a2.25 2.25 0 01-2.25 2.25H3.75A2.25 2.25 0 011.5 18V6zM3 16.06V18c0 .414.336.75.75.75h16.5A.75.75 0 0021 18v-1.94l-2.69-2.689a1.5 1.5 0 00-2.12 0l-.88.879.97.97a.75.75 0 11-1.06 1.06l-5.16-5.159a1.5 1.5 0 00-2.12 0L3 16.061zm10.125-7.81a1.125 1.125 0 112.25 0 1.125 1.125 0 01-2.25 0z"
-                        clipRule="evenodd"
-                      />
+                      <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z" />
                     </svg>
-                    <div className="mt-4 flex text-sm leading-6 text-gray-600">
-                      <label
-                        htmlFor="file-upload"
-                        className="relative cursor-pointer rounded-md bg-white font-semibold text-indigo-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-indigo-600 focus-within:ring-offset-2 hover:text-indigo-500"
-                      >
-                        <span>Upload a file </span>
-                        <input
-                          id="file-upload"
-                          name="file-upload"
-                          type="file"
-                          className="sr-only"
-                          onChange={handlePictureChange}
-                        />
-                      </label>
-                      <div></div>
-                      <p className="pl-1">or drag and drop </p>
+                    <span className="sr-only">Info</span>
+                    <div>
+                      <span className="font-medium">
+                        Cập nhật ảnh thành công, vui lòng đăng nhập lại
+                      </span>
                     </div>
-                    <p className="text-xs leading-5 text-gray-600">
-                      PNG, JPG, GIF up to 10MB
-                    </p>
                   </div>
-                </div>
-              </div>
-
-              <div className="sm:col-span-4">
-                <label
-                  htmlFor="phoneNumber"
-                  className="block text-sm font-medium leading-6 text-gray-900"
-                >
-                  Số điện thoại
-                </label>
-                <div className="mt-2">
-                  <div className="flex rounded-md shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-inset focus-within:ring-indigo-600 sm:max-w-md">
-                    <input
-                      required
-                      type="text"
-                      name="phoneNumber"
-                      id="phoneNumber"
-                      onChange={handleContactNumberChange}
-                      className="block flex-1 border-0 bg-transparent py-1.5 pl-1 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="sm:col-span-4">
-                <label
-                  htmlFor="birthday:"
-                  className="block text-sm font-medium leading-6 text-gray-900"
-                >
-                  Ngày sinh
-                </label>
-                <div className="mt-2">
-                  <div className="flex rounded-md shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-inset focus-within:ring-indigo-600 sm:max-w-md">
-                    <input
-                      required
-                      type="date"
-                      name="birthday:"
-                      id="birthday:"
-                      onChange={handleBirthdayChange}
-                      className="block flex-1 border-0 bg-transparent py-1.5 pl-1 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="sm:col-span-4">
-                <label
-                  htmlFor="address"
-                  className="block text-sm font-medium leading-6 text-gray-900"
-                >
-                  Địa chỉ
-                </label>
-                <div className="mt-2">
-                  <div className="flex rounded-md shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-inset focus-within:ring-indigo-600 sm:max-w-md">
-                    <input
-                      required
-                      type="text"
-                      name="address"
-                      id="address"
-                      onChange={handleAddressChange}
-                      className="block flex-1 border-0 bg-transparent py-1.5 pl-1 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6"
-                    />
-                  </div>
-                </div>
-              </div>
+                </>
+              )}
+              <ul className="flex flex-wrap text-sm font-medium text-center border border-gray-200 rounded-lg  shadow text-gray-500 dark:text-gray-400">
+                <li className="">
+                  <a
+                    href="#"
+                    className={`inline-block px-4 py-3 rounded-lg ${
+                      activeTab === "profile"
+                        ? "text-white bg-blue-600"
+                        : "hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 dark:hover:text-white"
+                    }`}
+                    onClick={() => handleTabClick("profile")}
+                  >
+                    Hồ sơ
+                  </a>
+                </li>
+                <li className="">
+                  <a
+                    onClick={() => handleTabClick("password")}
+                    href="#"
+                    className={`inline-block px-4 py-3 rounded-lg ${
+                      activeTab === "password"
+                        ? "text-white bg-blue-600"
+                        : "hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 dark:hover:text-white"
+                    }`}
+                  >
+                    Mật khẩu
+                  </a>
+                </li>
+              </ul>
             </div>
           </div>
-        </div>
+          <div className="w-full sm:w-1/2 sm:pl-2">
+            {activeTab === "profile" && (
+              <>
+                <div className="max-w-full   p-6 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                  <p className="font-medium mb-2 text-lg">Hồ sơ cá nhân</p>
+                  <form onSubmit={handleUpdateProfile}>
+                    <div className="flex flex-wrap mb-2">
+                      <div className="flex flex-col p-2  w-full sm:w-1/2">
+                        <label
+                          htmlFor="fullname"
+                          className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                        >
+                          Họ và tên
+                        </label>
+                        <input
+                          type="text"
+                          id="fullname"
+                          className="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
+                          value={fullName}
+                          onChange={(e) => setFullName(e.target.value)}
+                          required
+                          disabled
+                        />
+                      </div>
+                      <div className="flex flex-col p-2  w-full sm:w-1/2">
+                        <label
+                          htmlFor="address"
+                          className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                        >
+                          Địa chỉ
+                        </label>
+                        <input
+                          type="text"
+                          id="address"
+                          className="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
+                          value={address}
+                          onChange={(e) => setAddress(e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div className="flex flex-col p-2  w-full sm:w-1/2">
+                        <label
+                          htmlFor="gender"
+                          className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                        >
+                          Giới tính
+                        </label>
+                        <select
+                          id="gender"
+                          value={gender}
+                          className="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
+                          onChange={(e) => setGender(e.target.value)}
+                          required
+                        >
+                          <option value="" disabled>
+                            Chọn giới tính
+                          </option>
+                          <option
+                            value="nam"
+                            defaultValue={doctorInfo?.gender === "nam"}
+                          >
+                            Nam
+                          </option>
+                          <option
+                            value="nữ"
+                            defaultValue={doctorInfo?.gender === "nữ"}
+                          >
+                            Nữ
+                          </option>
+                        </select>
+                      </div>
+                      <div className="flex flex-col p-2  w-full sm:w-1/2">
+                        <label
+                          htmlFor="phoneNumber"
+                          className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                        >
+                          Số điện thoại
+                        </label>
+                        <input
+                          type="text"
+                          id="phoneNumber"
+                          className="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
+                          value={phoneNumber}
+                          onChange={(e) => setPhoneNumber(e.target.value)}
+                          required
+                        />
+                      </div>
 
-        <div className="mt-6 flex items-center justify-end gap-x-6">
-          <button
-            type="button"
-            className="text-sm font-semibold leading-6 text-gray-900"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSubmit}
-            type="submit"
-            className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-          >
-            Save
-          </button>
+                      <div className="flex flex-col p-2  w-full sm:w-1/2">
+                        <label
+                          htmlFor="email"
+                          className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                        >
+                          Email
+                        </label>
+                        <input
+                          type="email"
+                          id="email"
+                          className="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div className="flex flex-col p-2  w-full sm:w-1/2">
+                        <label
+                          htmlFor="email"
+                          className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                        >
+                          Ngày sinh
+                        </label>
+                        <Datepicker
+                          options={options}
+                          show={show}
+                          setShow={handleClose}
+                          onChange={handleDateSelect}
+                        />
+                      </div>
+
+                      <div className="flex flex-col p-2  w-full sm:w-1/2">
+                        <label
+                          htmlFor="citizenId"
+                          className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                        >
+                          Căn cước công dân
+                        </label>
+                        <input
+                          type="text"
+                          id="citizenId"
+                          className="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
+                          value={citizenId}
+                          onChange={(e) => setCitizenId(e.target.value)}
+                          required
+                        />
+                      </div>
+                    </div>
+                    {loading ? (
+                      <>
+                        {" "}
+                        <div>
+                          <svg
+                            aria-hidden="true"
+                            className="inline w-4 h-4 mr-2 text-gray-200 animate-spin dark:text-gray-600 fill-blue-600"
+                            viewBox="0 0 100 101"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <path
+                              d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
+                              fill="currentColor"
+                            />
+                            <path
+                              d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
+                              fill="currentFill"
+                            />
+                          </svg>
+                          <span className="sr-only">Loading...</span>
+                        </div>
+                      </>
+                    ) : (
+                      <button
+                        type="submit"
+                        className="text-white mb-2 bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                      >
+                        Cập nhật
+                      </button>
+                    )}
+                    {error && (
+                      <>
+                        <div
+                          className="flex items-center p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400"
+                          role="alert"
+                        >
+                          <svg
+                            className="flex-shrink-0 inline w-4 h-4 mr-3"
+                            aria-hidden="true"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                          >
+                            <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z" />
+                          </svg>
+                          <span className="sr-only">Info</span>
+                          <div>Có lỗi xảy ra, vui lòng thử lại</div>
+                        </div>
+                      </>
+                    )}
+                    {success && (
+                      <>
+                        <div
+                          className="flex items-center p-4 mb-4 text-sm text-green-800 border border-green-300 rounded-lg bg-green-50 dark:bg-gray-800 dark:text-green-400 dark:border-green-800"
+                          role="alert"
+                        >
+                          <svg
+                            className="flex-shrink-0 inline w-4 h-4 mr-3"
+                            aria-hidden="true"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                          >
+                            <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z" />
+                          </svg>
+                          <span className="sr-only">Info</span>
+                          <div>
+                            <span className="font-medium">
+                              Cập nhật thông tin thành công
+                            </span>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </form>
+                </div>
+              </>
+            )}
+            {activeTab === "password" && (
+              <>
+                <div className="flex ">
+                  <div className="w-96 p-6 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+                    <p className="font-medium mb-2 text-lg">Đổi mật khẩu</p>
+                    <form onSubmit={handleChangePassword}>
+                      <div className="mb-6">
+                        <label
+                          htmlFor="oldpassword"
+                          className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                        >
+                          Mật khẩu cũ
+                        </label>
+                        <input
+                          value={oldPassword}
+                          onChange={(e) => setOldPassword(e.target.value)}
+                          type="password"
+                          id="oldpassword"
+                          className="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
+                          required
+                        />
+                      </div>
+
+                      <div className="mb-6">
+                        <label
+                          htmlFor="newpassword"
+                          className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                        >
+                          Mật khẩu mới
+                        </label>
+                        <input
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          type="password"
+                          id="newpassword"
+                          className="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
+                          required
+                        />
+                      </div>
+
+                      <div className="mb-6">
+                        <label
+                          htmlFor="repeat-newpassword"
+                          className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                        >
+                          Nhập lại mật khẩu mới
+                        </label>
+                        <input
+                          value={repeatNewPassword}
+                          onChange={(e) => setRepeatNewPassword(e.target.value)}
+                          type="password"
+                          id="repeat-newpassword"
+                          className="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:shadow-sm-light"
+                          required
+                        />
+                      </div>
+                      {loading ? (
+                        <>
+                          {" "}
+                          <div>
+                            <svg
+                              aria-hidden="true"
+                              className="inline w-4 h-4 mr-2 text-gray-200 animate-spin dark:text-gray-600 fill-blue-600"
+                              viewBox="0 0 100 101"
+                              fill="none"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path
+                                d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
+                                fill="currentColor"
+                              />
+                              <path
+                                d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
+                                fill="currentFill"
+                              />
+                            </svg>
+                            <span className="sr-only">Loading...</span>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            type="submit"
+                            className="text-white mb-2 bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                          >
+                            Đổi mật khẩu
+                          </button>
+                        </>
+                      )}
+                      {error && (
+                        <>
+                          <div
+                            className="flex items-center p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400"
+                            role="alert"
+                          >
+                            <svg
+                              className="flex-shrink-0 inline w-4 h-4 mr-3"
+                              aria-hidden="true"
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="currentColor"
+                              viewBox="0 0 20 20"
+                            >
+                              <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z" />
+                            </svg>
+                            <span className="sr-only">Info</span>
+                            <div>Mật khẩu không chính xác</div>
+                          </div>
+                        </>
+                      )}
+                      {success && (
+                        <>
+                          <div
+                            className="flex items-center p-4 mb-4 text-sm text-green-800 border border-green-300 rounded-lg bg-green-50 dark:bg-gray-800 dark:text-green-400 dark:border-green-800"
+                            role="alert"
+                          >
+                            <svg
+                              className="flex-shrink-0 inline w-4 h-4 mr-3"
+                              aria-hidden="true"
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="currentColor"
+                              viewBox="0 0 20 20"
+                            >
+                              <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z" />
+                            </svg>
+                            <span className="sr-only">Info</span>
+                            <div>
+                              <span className="font-medium">
+                                Đổi mật khẩu thành công
+                              </span>
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </form>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
         </div>
-      </form>
+      </div>
     </div>
   );
 };

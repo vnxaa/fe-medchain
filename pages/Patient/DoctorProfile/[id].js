@@ -4,30 +4,16 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
 import Navigation from "../../Common/Navigation";
-const PatientProfile = () => {
+const DoctorProfile = () => {
   const router = useRouter();
   const { id } = router.query;
-  const [patientInfo, setPatientInfo] = useState("");
-  const [nfts, setNFTs] = useState([]);
+  const [doctorInfo, setDoctorInfo] = useState("");
+  const [patientId, setPatientId] = useState("");
+  const [medicalRecords, setMedicalRecords] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [accountsPerPage] = useState(3);
+  const [accountsPerPage] = useState(2);
   const [activeTab, setActiveTab] = useState("profile");
-  const [isLoading, setIsLoading] = useState(false);
-  const handleTabClick = (tab) => {
-    setActiveTab(tab);
-  };
-
-  const fetchNFTs = async (address) => {
-    try {
-      setIsLoading(true);
-      const response = await axios.get(`/api/nfts?address=${address}`);
-      setNFTs(response.data);
-    } catch (error) {
-      console.error("Error fetching NFTs:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const [patientInfo, setPatientInfo] = useState({});
   useEffect(() => {
     // Get the token from localStorage
     const token = localStorage.getItem("token");
@@ -38,13 +24,15 @@ const PatientProfile = () => {
         const decoded = jwt_decode(token);
         console.log(decoded);
 
-        // Check if the user is a hospital
-        if (decoded.hospital) {
-          // User is a hospital, allow access to the hospital page
-          console.log("Access granted to hospital page");
+        // Check if the user is a patient
+        if (decoded.patient) {
+          setPatientId(decoded.patient._id);
+          setPatientInfo(decoded.patient);
+          // User is a patient, allow access to the patient page
+          console.log("Access granted to patient page");
         } else {
-          // User is not a hospital, redirect to another page or show an error message
-          console.log("Access denied. User is not a hospital");
+          // User is not a patient, redirect to another page or show an error message
+          console.log("Access denied. User is not a patient");
         }
       } catch (error) {
         // Handle decoding error
@@ -52,51 +40,61 @@ const PatientProfile = () => {
       }
     } else {
       // Token not found, redirect to login page or show an error message
-      // router.push("/Hospital/LoginPage");
+      router.push("/Patient/LoginPage");
 
       console.log("Token not found. Please log in.");
     }
     if (id) {
-      fetchPatientInfo(id);
+      fetchDoctorInfo(id);
     }
-  }, [id, router]);
-  useEffect(() => {
-    if (patientInfo.walletAddress) {
-      fetchNFTs(patientInfo.walletAddress);
+    if (patientId && id) {
+      fetchMedicalRecordProvide(id, patientId);
     }
-  }, [patientInfo.walletAddress]);
-  const fetchPatientInfo = async (patientId) => {
+  }, [id, router, patientId]);
+  const fetchDoctorInfo = async (doctorId) => {
     try {
       const response = await axios.get(
-        `${process.env.service}/api/patient/${patientId}`
+        `${process.env.service}/api/doctor/${doctorId}`
       );
 
-      setPatientInfo(response.data);
+      setDoctorInfo(response.data);
     } catch (error) {
       console.error(error);
     }
   };
+  const fetchMedicalRecordProvide = async (doctorId, patientId) => {
+    try {
+      const response = await axios.get(
+        `${process.env.service}/api/medicalRecord/doctor/${doctorId}/patient/${patientId}`
+      );
+      //   console.log(response.data);
+      setMedicalRecords(response.data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+  // Calculate total number of pages
+  const totalPages = Math.ceil(medicalRecords.length / accountsPerPage);
+
+  // Get current accounts based on pagination
+  const indexOfLast = currentPage * accountsPerPage;
+  const indexOfFirst = indexOfLast - accountsPerPage;
+  const currentMedicalRecords = medicalRecords.slice(indexOfFirst, indexOfLast);
+  // Update current page
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
   const calculateAge = (birthday) => {
     const currentYear = new Date().getFullYear();
     const birthYear = new Date(birthday).getFullYear();
     const age = currentYear - birthYear;
     return age;
   };
-  // Calculate total number of pages
-  const totalPages = Math.ceil(nfts.length / accountsPerPage);
-
-  // Get current accounts based on pagination
-  const indexOfLast = currentPage * accountsPerPage;
-  const indexOfFirst = indexOfLast - accountsPerPage;
-  const currentNfts = nfts.slice(indexOfFirst, indexOfLast);
-  // Update current page
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
   return (
     <div>
       <Navigation />
-      <div className="sm:container sm:mx-auto">
+
+      <div className="sm:container center sm:mx-auto">
         <nav
-          className="flex px-5 mb-2 py-3 text-gray-700 border border-gray-200 rounded-lg bg-gray-50 dark:bg-gray-800 dark:border-gray-700"
+          className="flex px-5 py-3 text-gray-700 mb-2 border border-gray-200 rounded-lg bg-gray-50 dark:bg-gray-800 dark:border-gray-700"
           aria-label="Breadcrumb"
         >
           <ol className="inline-flex items-center space-x-1 md:space-x-3">
@@ -104,27 +102,7 @@ const PatientProfile = () => {
             <li>
               <div className="flex items-center">
                 <div className="ml-1 text-sm font-medium text-gray-700 hover:text-blue-600 md:ml-2 dark:text-gray-400 dark:hover:text-white">
-                  <Link href="/Hospital/Patient">Bệnh nhân</Link>
-                </div>
-              </div>
-            </li>
-            <li>
-              <div className="flex items-center">
-                <svg
-                  aria-hidden="true"
-                  className="w-6 h-6 text-gray-400"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                <div className="ml-1 text-sm font-medium text-gray-700 hover:text-blue-600 md:ml-2 dark:text-gray-400 dark:hover:text-white">
-                  <Link href="/Hospital/PatientList">Danh sách bệnh nhân</Link>
+                  <Link href="/Patient/Doctor">Danh sách bác sĩ</Link>
                 </div>
               </div>
             </li>
@@ -143,23 +121,22 @@ const PatientProfile = () => {
                     clipRule="evenodd"
                   />
                 </svg>
-                <span className="ml-1 text-sm font-medium text-blue-600 md:ml-2 ">
-                  Bệnh nhân {patientInfo?.name}
+                <span className="ml-1 text-sm font-medium text-gray-500 md:ml-2 dark:text-gray-400">
+                  Bác sĩ {doctorInfo?.name}
                 </span>
               </div>
             </li>
           </ol>
         </nav>
-
         <div className="flex flex-wrap justify-center ">
           <div className="">
             <div className="sm:container mb-2 sm:mx-auto flex flex-col items-center">
               <div className="w-40 h-62 mb-2 p-6 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
                 <div className="relative inline-block">
-                  {patientInfo.picture ? (
+                  {doctorInfo.picture ? (
                     <>
                       <img
-                        src={patientInfo.picture}
+                        src={doctorInfo.picture}
                         alt="staff"
                         className="rounded-full object-cover w-36 h-auto"
                       />
@@ -188,14 +165,17 @@ const PatientProfile = () => {
                     </>
                   )}
                 </div>
-                <p className="font-medium text-center ">{patientInfo?.name}</p>
+                <p className="font-medium text-center ">{doctorInfo?.name}</p>
 
-                <p className="text-center mb-2 text-sm  italic">
-                  {calculateAge(patientInfo?.birthday)} tuổi
+                <p
+                  style={{ wordWrap: "break-word" }}
+                  className="text-center mb-2 font-light italic"
+                >
+                  @{doctorInfo?.username}
                 </p>
                 <div className="flex items-center justify-center">
                   <span className="bg-blue-100 text-blue-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-full dark:bg-blue-900 dark:text-blue-300">
-                    Bệnh nhân
+                    Bác sĩ
                   </span>
                 </div>
               </div>
@@ -211,10 +191,10 @@ const PatientProfile = () => {
                       Giới tính
                     </dt>
                     <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                      {patientInfo.gender &&
+                      {doctorInfo.gender &&
                         `${
-                          patientInfo.gender.charAt(0).toUpperCase() +
-                          patientInfo.gender.slice(1)
+                          doctorInfo.gender.charAt(0).toUpperCase() +
+                          doctorInfo.gender.slice(1)
                         }`}
                     </dd>
                   </div>
@@ -223,7 +203,7 @@ const PatientProfile = () => {
                       Ngày Sinh
                     </dt>
                     <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                      {new Date(patientInfo?.birthday).toLocaleDateString(
+                      {new Date(doctorInfo?.birthday).toLocaleDateString(
                         "en-GB"
                       )}
                     </dd>
@@ -233,16 +213,7 @@ const PatientProfile = () => {
                       Số điện thoại
                     </dt>
                     <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                      {patientInfo.fatherContact && (
-                        <p className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                          <span>Bố: {patientInfo.fatherContact}</span>
-                        </p>
-                      )}
-                      {patientInfo.motherContact && (
-                        <p className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                          <span>Mẹ: {patientInfo.motherContact}</span>
-                        </p>
-                      )}
+                      {doctorInfo?.contactNumber}
                     </dd>
                   </div>
                   <div className="px-4 py-5 bg-white sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
@@ -250,13 +221,13 @@ const PatientProfile = () => {
                       Địa chỉ
                     </dt>
                     <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                      {patientInfo?.address}
+                      {doctorInfo?.address}
                     </dd>
                   </div>
                   <div className="px-4 py-5 bg-gray-50 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                     <dt className="text-sm font-medium text-gray-500">Email</dt>
                     <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                      {patientInfo?.email}
+                      {doctorInfo?.email}
                     </dd>
                   </div>
                 </dl>
@@ -264,7 +235,6 @@ const PatientProfile = () => {
             </div>
           </div>
         </div>
-
         <div
           className="mx-auto overflow-hidden bg-white shadow sm:rounded-lg"
           style={{ marginTop: "10px" }}
@@ -280,7 +250,7 @@ const PatientProfile = () => {
                   aria-current={activeTab === "profile" ? "page" : undefined}
                   onClick={() => handleTabClick("profile")}
                 >
-                  Bệnh án
+                  Bệnh án đã cấp
                 </p>
               </li>
             </ul>
@@ -297,8 +267,8 @@ const PatientProfile = () => {
                     <th scope="col" className="px-3 py-3">
                       NFT bệnh án
                     </th>
-                    <th scope="col" className="px-9 py-5">
-                      Mã hash giao dịch
+                    <th scope="col" className="px-12 py-5">
+                      Bệnh nhân
                     </th>
                     <th scope="col" className="px-6 py-3">
                       Ngày tạo
@@ -307,79 +277,78 @@ const PatientProfile = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {isLoading ? (
-                    <>
-                      <div>
-                        <svg
-                          aria-hidden="true"
-                          className="w-8 h-8 mr-2 text-gray-200 animate-spin dark:text-gray-600 fill-blue-600"
-                          viewBox="0 0 100 101"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <path
-                            d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
-                            fill="currentColor"
-                          />
-                          <path
-                            d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
-                            fill="currentFill"
-                          />
-                        </svg>
-                        <span>
-                          Đang lấy dữ liệu từ Blockchain, vui lòng chờ!
+                  {currentMedicalRecords.map((record, index) => (
+                    <tr
+                      key={index}
+                      className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
+                    >
+                      <td className="w-4 p-4"></td>
+                      <td className="px-6 p-7">
+                        <span className="bg-blue-100 text-blue-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-full dark:bg-blue-900 dark:text-blue-300">
+                          NFT
                         </span>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      {currentNfts.map((record, index) => (
-                        <tr
-                          key={index}
-                          className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
-                        >
-                          <td className="w-4 p-4"></td>
-                          <td className="px-6 p-7">
-                            <span className="bg-blue-100 text-blue-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-full dark:bg-blue-900 dark:text-blue-300">
-                              NFT
-                            </span>
-                          </td>
-                          <td className="px-6 py-2">
+                      </td>
+                      <td className="px-6 py-2">
+                        {patientInfo?.picture ? (
+                          <div
+                            scope="row"
+                            className="flex items-center px-6 py-4 text-gray-900 whitespace-nowrap dark:text-white"
+                          >
+                            <img
+                              className="w-10 h-10 rounded-full"
+                              src={patientInfo?.picture || ""}
+                              alt="patient"
+                            />
                             <div className="pl-3">
                               <div className="text-base font-semibold">
-                                <a
-                                  href={`https://sepolia.etherscan.io/tx/${record.transactionHash}`}
-                                  target="_blank"
-                                  rel="noreferrer noopener"
-                                  className=" hover:text-blue-500"
-                                >
-                                  {record.transactionHash}
-                                </a>
+                                {patientInfo?.name}
+                              </div>
+                              <div className="font-normal text-gray-500">
+                                {calculateAge(patientInfo?.birthday)} tuổi
                               </div>
                             </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="text-base font-semibold">
-                              {new Date(
-                                record.timestamp * 1000
-                              ).toLocaleDateString()}{" "}
-                              {new Date(
-                                record.timestamp * 1000
-                              ).toLocaleTimeString()}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <a
-                              href={`/Hospital/PatientProfile/NFTMedicalRecord/${record.tokenId}/${record.to}/${id}`}
-                              className="font-medium text-blue-600 dark:text-blue-500 hover:underline"
+                          </div>
+                        ) : (
+                          <div>
+                            <svg
+                              aria-hidden="true"
+                              className="w-8 h-8 mr-2 text-gray-200 animate-spin dark:text-gray-600 fill-blue-600"
+                              viewBox="0 0 100 101"
+                              fill="none"
+                              xmlns="http://www.w3.org/2000/svg"
                             >
-                              Xem
-                            </a>
-                          </td>
-                        </tr>
-                      ))}
-                    </>
-                  )}
+                              <path
+                                d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
+                                fill="currentColor"
+                              />
+                              <path
+                                d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
+                                fill="currentFill"
+                              />
+                            </svg>
+                            <span className="sr-only">Loading...</span>
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-base font-semibold">
+                          {new Date(record.date).toLocaleDateString("en-GB", {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            hour12: true,
+                          })}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="font-medium text-blue-600 dark:text-blue-500 hover:underline">
+                          <Link href="/Patient/MedicalRecord/45">Xem</Link>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
               <nav aria-label="Page navigation example">
@@ -473,4 +442,4 @@ const PatientProfile = () => {
   );
 };
 
-export default PatientProfile;
+export default DoctorProfile;

@@ -121,6 +121,10 @@ const Doctor = () => {
                 <th scope="col" className="px-6 py-5">
                   Số điện thoại
                 </th>
+
+                <th scope="col" className="px-6 py-3">
+                  Xem thông tin
+                </th>
                 <th scope="col" className="px-6 py-3">
                   Đặt lịch khám
                 </th>
@@ -176,6 +180,14 @@ const Doctor = () => {
                   </td>
                   <td className="px-6 py-4">
                     <p className="font-medium ">{doctor?.contactNumber}</p>
+                  </td>
+                  <td className="px-6 py-4">
+                    <a
+                      href={`/Patient/DoctorProfile/${doctor._id}`}
+                      className="font-medium text-blue-600 dark:text-blue-500 hover:underline"
+                    >
+                      Xem thông tin
+                    </a>
                   </td>
                   <td className="px-6 py-4">
                     <a

@@ -8,7 +8,7 @@ const MedicalRecord = () => {
   const [nfts, setNFTs] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [accountsPerPage] = useState(5);
+  const [accountsPerPage] = useState(8);
   const fetchNFTs = async (address) => {
     try {
       setIsLoading(true);

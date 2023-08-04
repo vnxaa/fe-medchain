@@ -10,12 +10,14 @@ import jwt_decode from "jwt-decode";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
-import Navigation from "../../Common/Navigation";
-const Doctor = () => {
+import Navigation from "../../../Common/Navigation";
+const NFTMedicalRecord = () => {
   const router = useRouter();
   const { tokenId } = router.query;
-  const [nft, setNFT] = useState({});
+  const [patientInfo, setPatientInfo] = useState("");
   const [address, setAddress] = useState("");
+  const [nft, setNFT] = useState({});
+
   const [medicalRecordsResult, setMedicalRecordsResult] = useState({});
   const fetchNFTByTokenId = async (address, tokenId) => {
     try {
@@ -27,7 +29,17 @@ const Doctor = () => {
       console.error(error);
     }
   };
+  const fetchPatientInfo = async (patientId) => {
+    try {
+      const response = await axios.get(
+        `${process.env.service}/api/patient/${patientId}`
+      );
 
+      setPatientInfo(response.data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
   const tokenURI = nft[0]?.tokenURI;
   if (tokenURI) {
     const fetchData = async () => {
@@ -44,7 +56,6 @@ const Doctor = () => {
     };
     fetchData();
   }
-
   useEffect(() => {
     // Get the token from localStorage
     const token = localStorage.getItem("token");
@@ -55,14 +66,13 @@ const Doctor = () => {
         const decoded = jwt_decode(token);
         console.log(decoded);
 
-        // Check if the user is a patient
-        if (decoded.patient) {
-          setAddress(decoded.patient.walletAddress);
-          // User is a patient, allow access to the patient page
-          console.log("Access granted to patient page");
+        // Check if the user is a hospital
+        if (decoded.hospital) {
+          // User is a hospital, allow access to the hospital page
+          console.log("Access granted to hospital page");
         } else {
-          // User is not a patient, redirect to another page or show an error message
-          console.log("Access denied. User is not a patient");
+          // User is not a hospital, redirect to another page or show an error message
+          console.log("Access denied. User is not a hospital");
         }
       } catch (error) {
         // Handle decoding error
@@ -70,22 +80,23 @@ const Doctor = () => {
       }
     } else {
       // Token not found, redirect to login page or show an error message
-      router.push("/Patient/LoginPage");
+      // router.push("/Hospital/LoginPage");
 
       console.log("Token not found. Please log in.");
     }
-    if (tokenId && address) {
-      fetchNFTByTokenId(address, tokenId);
+    if (tokenId) {
+      fetchNFTByTokenId(tokenId[1], tokenId[0]);
+      fetchPatientInfo(tokenId[2]);
+      setAddress(tokenId[2]);
     }
-  }, [tokenId, router, address]);
+  }, [tokenId, router]);
 
   return (
     <div>
       <Navigation />
-
-      <div className="sm:container center sm:mx-auto">
+      <div className="sm:container sm:mx-auto">
         <nav
-          className="flex px-5 py-3 text-gray-700 border border-gray-200 rounded-lg bg-gray-50 dark:bg-gray-800 dark:border-gray-700"
+          className="flex px-5 mb-2 py-3 text-gray-700 border border-gray-200 rounded-lg bg-gray-50 dark:bg-gray-800 dark:border-gray-700"
           aria-label="Breadcrumb"
         >
           <ol className="inline-flex items-center space-x-1 md:space-x-3">
@@ -93,7 +104,49 @@ const Doctor = () => {
             <li>
               <div className="flex items-center">
                 <div className="ml-1 text-sm font-medium text-gray-700 hover:text-blue-600 md:ml-2 dark:text-gray-400 dark:hover:text-white">
-                  <Link href="/Patient/MedicalRecord">Danh sách bệnh án</Link>
+                  <Link href="/Hospital/Patient">Bệnh nhân</Link>
+                </div>
+              </div>
+            </li>
+            <li>
+              <div className="flex items-center">
+                <svg
+                  aria-hidden="true"
+                  className="w-6 h-6 text-gray-400"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                <div className="ml-1 text-sm font-medium text-gray-700 hover:text-blue-600 md:ml-2 dark:text-gray-400 dark:hover:text-white">
+                  <Link href="/Hospital/PatientList">Danh sách bệnh nhân</Link>
+                </div>
+              </div>
+            </li>
+            <li>
+              <div className="flex items-center">
+                <svg
+                  aria-hidden="true"
+                  className="w-6 h-6 text-gray-400"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                <div className="ml-1 text-sm font-medium text-gray-700 hover:text-blue-600 md:ml-2 dark:text-gray-400 dark:hover:text-white">
+                  <a href={`/Hospital/PatientProfile/${address}`}>
+                    Bệnh nhân {patientInfo?.name}
+                  </a>
                 </div>
               </div>
             </li>
@@ -112,16 +165,13 @@ const Doctor = () => {
                     clipRule="evenodd"
                   />
                 </svg>
-                <span className="ml-1 text-sm font-medium text-gray-500 md:ml-2 dark:text-gray-400">
-                  {/* Bệnh án tim của bệnh nhân{" "}
-                  {medicalRecordsResult?.hanh_chinh?.ho_va_ten} */}
-                  {nft[0]?.transactionHash}
+                <span className="ml-1 text-sm font-medium text-blue-600 md:ml-2 ">
+                  Xem bệnh án
                 </span>
               </div>
             </li>
           </ol>
         </nav>
-
         <div className=" top-0 left-0 right-0 bottom-0 flex items-center justify-center">
           <div className=" w-full max-w-2xl">
             {/* Modal content */}
@@ -451,4 +501,4 @@ const Doctor = () => {
   );
 };
 
-export default Doctor;
+export default NFTMedicalRecord;
