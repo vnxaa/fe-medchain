@@ -9,7 +9,7 @@ const DoctorAccountList = () => {
   const [selectedStatus, setSelectedStatus] = useState("");
   const [updateSuccess, setUpdateSuccess] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [accountsPerPage] = useState(5);
+  const [accountsPerPage] = useState(10);
   const [accountRequests, setAccountRequests] = useState([]);
   const [loadingaccountRequests, setloadingaccountRequests] = useState(false);
   const [statusFilter, setStatusFilter] = useState("");

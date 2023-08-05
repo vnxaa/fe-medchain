@@ -6,7 +6,7 @@ import Navigation from "../Common/Navigation";
 const PatientAccountList = () => {
   const [showDrawer, setShowDrawer] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [accountsPerPage] = useState(5);
+  const [accountsPerPage] = useState(10);
   const [patients, setPatients] = useState([]);
   const fetchPatients = async () => {
     try {

@@ -21,7 +21,7 @@ const StaffAccountList = () => {
   const [loadingRegister, setLoadingRegister] = useState(false);
   const [successRegister, setSuccessRegister] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [accountsPerPage] = useState(5);
+  const [accountsPerPage] = useState(10);
   const handleToggleDrawer = (recordName, phoneNumber, status, email, id) => {
     setSelectedRecordName(recordName);
     setSelectedRecordPhoneNumber(phoneNumber);

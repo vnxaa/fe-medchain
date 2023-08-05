@@ -56,10 +56,7 @@ const Navigation = () => {
   };
 
   return (
-    <nav
-      className="bg-white mb-2 border-b border-gray-200 dark:bg-gray-900"
-      // style={{ marginBottom: "50px" }}
-    >
+    <nav className="bg-white mb-2 border-b border-gray-200 dark:bg-gray-900">
       <div className="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
         <a href="#" className="flex items-center">
           <div className="h-8 mr-1">

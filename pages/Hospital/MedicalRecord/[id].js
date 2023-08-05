@@ -24,15 +24,14 @@ const MedicalRecord = () => {
   const getRejectReasonsByMedicalRecordId = async (id) => {
     try {
       const response = await axios.get(
-        `${process.env.service}/api/rejectReason/?medicalRecordId=${id}`
+        `${process.env.service}/api/rejectReason/medicalRecord/${id}`
       );
-      const reasons = response.data?.rejectReasons[0]?.reason;
+      // console.log(response.data?.rejectReason);
+      const length = response.data?.rejectReason.length - 1;
+      const reasons = response.data?.rejectReason[length]?.reason;
       setRejectReasons(reasons);
     } catch (error) {
-      console.error(
-        "Failed to fetch reject reasons:",
-        error.response.data.message
-      );
+      console.error("Failed to fetch reject reasons:", error);
     }
   };
   const handleReasonChange = (e) => {
@@ -131,8 +130,10 @@ const MedicalRecord = () => {
     }
   }, [id, router]);
   useEffect(() => {
-    fetchPatientInfo(medicalRecords.patientId);
-    fetchDoctorInfo(medicalRecords.doctorId);
+    if (medicalRecords.patientId && medicalRecords.doctorId) {
+      fetchPatientInfo(medicalRecords.patientId);
+      fetchDoctorInfo(medicalRecords.doctorId);
+    }
   }, [medicalRecords]);
 
   const mintNFT = async () => {
@@ -258,7 +259,7 @@ const MedicalRecord = () => {
             </li>
           </ol>
         </nav>
-        <div className=" top-0 left-0 right-0 bottom-0 flex items-center justify-center">
+        <div className=" top-0 left-0 mt-2 right-0 bottom-0 flex items-center justify-center">
           <div className=" w-full max-w-2xl">
             {/* Modal content */}
             <div className=" bg-white rounded-lg shadow dark:bg-gray-700">

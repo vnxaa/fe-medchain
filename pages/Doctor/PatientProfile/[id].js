@@ -89,7 +89,9 @@ const PatientProfile = () => {
     }
   }, [id, router]);
   useEffect(() => {
-    fetchMedicalRecordsByPatientId(id);
+    if (id) {
+      fetchMedicalRecordsByPatientId(id);
+    }
   }, [statusFilter, fetchMedicalRecordsByPatientId]);
   useEffect(() => {
     if (medicalRecords.length > 0) {

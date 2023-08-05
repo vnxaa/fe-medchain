@@ -31,6 +31,8 @@ const EditMedicalRecord = () => {
   //4. Khám toàn thân
   const [mach, setMach] = useState("");
   const [huyetap, setHuyetap] = useState("");
+  const [huyetapTamThu, setHuyetapTamThu] = useState("");
+  const [huyetapTamTruong, setHuyetapTamTruong] = useState("");
   const [nhietdo, setNhietdo] = useState("");
   const [nhiptho, setNhiptho] = useState("");
   const [cannang, setCannang] = useState("");
@@ -45,7 +47,7 @@ const EditMedicalRecord = () => {
   const [chandoansobo, setChandoansobo] = useState("");
   //8. Chẩn đoán xác định
   const [chandoanxacdinh, setChandoanxacdinh] = useState("");
-
+  const [selectedRadio, setSelectedRadio] = useState("");
   //1. Lý do vào viện
   const handleLydoChange = (e) => {
     setLydo(e.target.value);
@@ -90,7 +92,19 @@ const EditMedicalRecord = () => {
   const handleHuyetapChange = (e) => {
     setHuyetap(e.target.value);
   };
+  const handleRadioChange = (event) => {
+    setSelectedRadio(event.target.value);
+    setChandoanxacdinh("");
+  };
+  const handleHuyetapTamThuChange = (event) => {
+    setHuyetapTamThu(event.target.value);
+    setHuyetap(event.target.value + "/" + huyetapTamTruong);
+  };
 
+  const handleHuyetapTamTruongChange = (event) => {
+    setHuyetapTamTruong(event.target.value);
+    setHuyetap(huyetapTamThu + "/" + event.target.value);
+  };
   const handleNhietdoChange = (e) => {
     setNhietdo(e.target.value);
   };
@@ -129,8 +143,11 @@ const EditMedicalRecord = () => {
   //8. Chẩn đoán xác định
   const handleChandoanxacdinhChange = (e) => {
     setChandoanxacdinh(e.target.value);
+    setSelectedRadio(e.target.value);
   };
-
+  const handleOtherChandoanxacdinhChange = (e) => {
+    setChandoanxacdinh(e.target.value);
+  };
   const handleTabClick = (tab) => {
     setActiveTab(tab);
   };
@@ -153,22 +170,26 @@ const EditMedicalRecord = () => {
   const fechDauHieuSinhTon = () => {
     const dauHieuSinhTon =
       medicalRecordsResult?.chuyen_mon?.kham_toan_than?.dau_hieu_sinh_ton;
+
     const dauHieuSinhTonString = JSON.stringify(dauHieuSinhTon);
+
     const infoArray = dauHieuSinhTonString.split(",");
 
     infoArray.forEach((info) => {
       const value = (info.split(":")[1] || "")
-        .trim() // Remove leading and trailing spaces
-        .replace(/[^0-9.]/g, ""); // Remove non-numeric characters
+        .replace(/[^0-9./]/g, "") // Remove non-numeric characters and keep the dot (for decimal values)
+        .trim(); // Remove leading and trailing spaces
 
       if (info.includes("Mạch")) {
-        setMach(value);
+        setMach(value.replace("/", ""));
       } else if (info.includes("Huyết áp")) {
-        setHuyetap(value);
+        const [tamthu, tamtruong] = value.split("/");
+        setHuyetapTamThu(tamthu);
+        setHuyetapTamTruong(tamtruong);
       } else if (info.includes("Nhiệt độ")) {
         setNhietdo(value);
       } else if (info.includes("Nhịp thở")) {
-        setNhiptho(value);
+        setNhiptho(value.replace("/", ""));
       } else if (info.includes("Cân nặng")) {
         setCannang(value);
       } else if (info.includes("Chiều cao")) {
@@ -201,7 +222,7 @@ const EditMedicalRecord = () => {
     setChandoansobo(medicalRecordsResult?.chuyen_mon?.chan_doan_so_bo);
     setChandoanxacdinh(medicalRecordsResult?.chuyen_mon?.chan_doan_xac_dinh);
   };
-  console.log(lydo);
+  // console.log(lydo);
   const fetchPatientInfo = async (id) => {
     try {
       const response = await axios.get(
@@ -559,7 +580,7 @@ const EditMedicalRecord = () => {
               </div>
 
               {activeTab === "lydo" && (
-                <div className="relative overflow-x-auto">
+                <div className="relative p-6 overflow-x-auto">
                   <div>
                     <label
                       htmlFor="lydo"
@@ -573,13 +594,13 @@ const EditMedicalRecord = () => {
                       defaultValue={lydo || ""}
                       rows={4}
                       className="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                      placeholder="Write your thoughts here..."
+                      placeholder="Ghi lý do vào viện tại đây"
                     />
                   </div>
                 </div>
               )}
               {activeTab === "benhsu" && (
-                <div className="relative overflow-x-auto">
+                <div className="relative p-6 overflow-x-auto">
                   <div>
                     <label
                       htmlFor="benhsu"
@@ -592,14 +613,14 @@ const EditMedicalRecord = () => {
                       onChange={handleBenhsuChange}
                       rows={4}
                       className="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                      placeholder="Write your thoughts here..."
+                      placeholder="Ghi bệnh sử tại đây"
                       defaultValue={benhsu || ""}
                     />
                   </div>
                 </div>
               )}
               {activeTab === "tiensu" && (
-                <div className="relative overflow-x-auto">
+                <div className="relative p-6 overflow-x-auto">
                   {/* tien su san khoa */}
                   <div>
                     <label
@@ -613,7 +634,7 @@ const EditMedicalRecord = () => {
                       onChange={handleTiensusankhoaChange}
                       rows={4}
                       className="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                      placeholder="Write your thoughts here..."
+                      placeholder="Ghi tiền sử sản khoa tại đây"
                       defaultValue={tiensusankhoa || ""}
                     />
                   </div>
@@ -630,7 +651,7 @@ const EditMedicalRecord = () => {
                       onChange={handleTiensubenhtatChange}
                       rows={4}
                       className="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                      placeholder="Write your thoughts here..."
+                      placeholder="Ghi tiền sử bệnh tật tại đây"
                       defaultValue={tiensubenhtat || ""}
                     />
                   </div>
@@ -647,7 +668,7 @@ const EditMedicalRecord = () => {
                       onChange={handleTiensungoaikhoaChange}
                       rows={4}
                       className="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                      placeholder="Write your thoughts here..."
+                      placeholder="Ghi tiền sử ngoại khoa tại đây"
                       defaultValue={tiensungoaikhoa || ""}
                     />
                   </div>
@@ -664,7 +685,7 @@ const EditMedicalRecord = () => {
                       onChange={handleTiensudiungChange}
                       rows={4}
                       className="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                      placeholder="Write your thoughts here..."
+                      placeholder="Ghi tiền sử dị ứng tại đây"
                       defaultValue={tiensudiung || ""}
                     />
                   </div>
@@ -681,7 +702,7 @@ const EditMedicalRecord = () => {
                       onChange={handleDinhduongChange}
                       rows={4}
                       className="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                      placeholder="Write your thoughts here..."
+                      placeholder="Ghi dinh dưỡng tại đây"
                       defaultValue={dinhduong || ""}
                     />
                   </div>
@@ -698,7 +719,7 @@ const EditMedicalRecord = () => {
                       onChange={handlePhatrientamthanvandongChange}
                       rows={4}
                       className="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                      placeholder="Write your thoughts here..."
+                      placeholder="Ghi phát triển tâm thần vận động tại đây"
                       defaultValue={phatrientamthanvandong || ""}
                     />
                   </div>
@@ -715,14 +736,14 @@ const EditMedicalRecord = () => {
                       onChange={handleTiemchungChange}
                       rows={4}
                       className="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                      placeholder="Write your thoughts here..."
+                      placeholder="Ghi tiêm chủng tại đây"
                       defaultValue={tiemchung || ""}
                     />
                   </div>
                 </div>
               )}
               {activeTab === "khamtoanthan" && (
-                <div className="relative overflow-x-auto">
+                <div className="relative p-6 overflow-x-auto">
                   <label
                     htmlFor="dhst"
                     className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
@@ -738,7 +759,7 @@ const EditMedicalRecord = () => {
                         Mạch (lần/phút)
                       </label>
                       <input
-                        type="text"
+                        type="number"
                         id="mach"
                         onChange={handleMachChange}
                         defaultValue={mach || ""}
@@ -747,23 +768,62 @@ const EditMedicalRecord = () => {
                         required
                       />
                     </div>
-                    <div>
-                      <label
-                        htmlFor="huyetap"
-                        className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                      >
-                        Huyết áp (mmHg)
-                      </label>
-                      <input
-                        type="text"
-                        id="huyetap"
-                        onChange={handleHuyetapChange}
-                        defaultValue={huyetap || ""}
-                        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                        // placeholder="Doe"
-                        required
-                      />
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="flex flex-col">
+                        <label
+                          htmlFor="huyetap-tam-thu"
+                          className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                        >
+                          Huyết áp tâm thu (mmHg)
+                        </label>
+                        <input
+                          type="number"
+                          id="huyetap-tam-thu"
+                          min="0"
+                          onChange={handleHuyetapTamThuChange}
+                          defaultValue={huyetapTamThu || ""}
+                          className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                          // placeholder="Huyết áp tâm thu"
+                          required
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <label
+                          htmlFor="huyetap-tam-truong"
+                          className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                        >
+                          Huyết áp tâm trương (mmHg)
+                        </label>
+                        <input
+                          type="number"
+                          id="huyetap-tam-truong"
+                          min="0"
+                          onChange={handleHuyetapTamTruongChange}
+                          defaultValue={huyetapTamTruong || ""}
+                          className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                          // placeholder="Huyết áp tâm trương"
+                          required
+                        />
+                      </div>
                     </div>
+
+                    {/* <div>
+                  <label
+                    htmlFor="huyetap"
+                    className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                  >
+                    Huyết áp (mmHg)
+                  </label>
+                  <input
+                    type="text"
+                    id="huyetap"
+                    onChange={handleHuyetapChange}
+                    defaultValue={huyetap || ""}
+                    className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                    placeholder="Huyết áp tâm thu / Huyết áp tâm trương"
+                    required
+                  />
+                </div> */}
                     <div>
                       <label
                         htmlFor="nhietdo"
@@ -772,7 +832,7 @@ const EditMedicalRecord = () => {
                         Nhiệt độ (°C)
                       </label>
                       <input
-                        type="text"
+                        type="number"
                         id="nhietdo"
                         onChange={handleNhietdoChange}
                         defaultValue={nhietdo || ""}
@@ -789,7 +849,7 @@ const EditMedicalRecord = () => {
                         Nhịp thở (lần/phút)
                       </label>
                       <input
-                        type="text"
+                        type="number"
                         id="nhiptho"
                         onChange={handleNhipthoChange}
                         defaultValue={nhiptho || ""}
@@ -806,7 +866,7 @@ const EditMedicalRecord = () => {
                         Cân nặng (kg)
                       </label>
                       <input
-                        type="text"
+                        type="number"
                         id="cannang"
                         onChange={handleCannangChange}
                         defaultValue={cannang || ""}
@@ -822,7 +882,7 @@ const EditMedicalRecord = () => {
                         Chiều cao (cm)
                       </label>
                       <input
-                        type="text"
+                        type="number"
                         id="chieucao"
                         onChange={handleChieucaoChange}
                         defaultValue={chieucao || ""}
@@ -834,7 +894,7 @@ const EditMedicalRecord = () => {
                 </div>
               )}
               {activeTab === "khamcoquan" && (
-                <div className="relative overflow-x-auto">
+                <div className="relative p-6 overflow-x-auto">
                   {/* tim mach */}
                   <div>
                     <label
@@ -848,7 +908,7 @@ const EditMedicalRecord = () => {
                       onChange={handleTimmachChange}
                       rows={4}
                       className="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                      placeholder="Write your thoughts here..."
+                      placeholder="Ghi chẩn đoán tim mạch tại đây"
                       defaultValue={timmach || ""}
                     />
                   </div>
@@ -865,7 +925,7 @@ const EditMedicalRecord = () => {
                       onChange={handleHohapChange}
                       rows={4}
                       className="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                      placeholder="Write your thoughts here..."
+                      placeholder="Ghi chẩn đoán hô hấp tại đây"
                       defaultValue={hohap || ""}
                     />
                   </div>
@@ -882,14 +942,14 @@ const EditMedicalRecord = () => {
                       onChange={handleTieuhoaChange}
                       rows={4}
                       className="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                      placeholder="Write your thoughts here..."
+                      placeholder="Ghi chẩn tiêu hóa tại đây"
                       defaultValue={tieuhoa || ""}
                     />
                   </div>
                 </div>
               )}
               {activeTab === "tomtatbenhan" && (
-                <div className="relative overflow-x-auto">
+                <div className="relative p-6 overflow-x-auto">
                   {/* tom tat benh an */}
                   <div>
                     <label
@@ -903,14 +963,14 @@ const EditMedicalRecord = () => {
                       onChange={handleTomtatbenhanChange}
                       rows={4}
                       className="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                      placeholder="Write your thoughts here..."
+                      placeholder="Ghi tóm tắt bệnh án tại đây"
                       defaultValue={tomtatbenhan || ""}
                     />
                   </div>
                 </div>
               )}
               {activeTab === "chandoansobo" && (
-                <div className="relative overflow-x-auto">
+                <div className="relative p-6 overflow-x-auto">
                   {/* chan doan so bo*/}
                   <div>
                     <label
@@ -924,14 +984,14 @@ const EditMedicalRecord = () => {
                       onChange={handleChandoansoboChange}
                       rows={4}
                       className="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                      placeholder="Write your thoughts here..."
+                      placeholder="Ghi chẩn đoán sơ bộ tại đây"
                       defaultValue={chandoansobo || ""}
                     />
                   </div>
                 </div>
               )}
               {activeTab === "chandoanxacdinh" && (
-                <div className="relative overflow-x-auto">
+                <div className="relative p-6 overflow-x-auto">
                   {/* chan doan xac dinh*/}
                   <div>
                     <label
@@ -940,14 +1000,164 @@ const EditMedicalRecord = () => {
                     >
                       8. Chẩn đoán xác định
                     </label>
-                    <textarea
-                      id="chandoanxacdinh"
-                      onChange={handleChandoanxacdinhChange}
-                      rows={4}
-                      className="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                      placeholder="Write your thoughts here..."
-                      defaultValue={chandoanxacdinh || ""}
-                    />
+                    {/* <textarea
+                  id="chandoanxacdinh"
+                  onChange={handleChandoanxacdinhChange}
+                  rows={4}
+                  className="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                  placeholder="Write your thoughts here..."
+                  defaultValue={chandoanxacdinh || ""}
+                /> */}
+                    <div className="flex items-center space-x-8 mb-4">
+                      <div className="flex items-center">
+                        <input
+                          id="thonglienthat"
+                          type="radio"
+                          value="Thông liên thất"
+                          name="radioOptions"
+                          onChange={handleChandoanxacdinhChange}
+                          className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                        />
+                        <label
+                          htmlFor="thonglienthat"
+                          className="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300"
+                        >
+                          Thông liên thất
+                        </label>
+                      </div>
+                      <div className="flex items-center">
+                        <input
+                          id="thongliennhi"
+                          type="radio"
+                          value="Thông liên nhĩ"
+                          name="radioOptions"
+                          onChange={handleChandoanxacdinhChange}
+                          className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                        />
+                        <label
+                          htmlFor="thongliennhi"
+                          className="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300"
+                        >
+                          Thông liên nhĩ
+                        </label>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-8 mb-4">
+                      <div className="flex items-center">
+                        <input
+                          id="condongmach"
+                          type="radio"
+                          name="radioOptions"
+                          value="Còn ống động mạch chủ"
+                          onChange={handleChandoanxacdinhChange}
+                          className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                        />
+                        <label
+                          htmlFor="condongmach"
+                          className="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300"
+                        >
+                          Còn ống động mạch chủ
+                        </label>
+                      </div>
+                      <div className="flex items-center">
+                        <input
+                          id="hepdongmach"
+                          type="radio"
+                          name="radioOptions"
+                          value="Hẹp eo động mạch chủ"
+                          onChange={handleChandoanxacdinhChange}
+                          className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                        />
+                        <label
+                          htmlFor="hepdongmach"
+                          className="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300"
+                        >
+                          Hẹp eo động mạch chủ
+                        </label>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-8 mb-4">
+                      <div className="flex items-center">
+                        <input
+                          id="vantim"
+                          type="radio"
+                          name="radioOptions"
+                          value="Bất thường van tim"
+                          onChange={handleChandoanxacdinhChange}
+                          className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                        />
+                        <label
+                          htmlFor="vantim"
+                          className="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300"
+                        >
+                          Bất thường van tim
+                        </label>
+                      </div>
+                      <div className="flex items-center">
+                        <input
+                          value="Tứ chứng Fallot"
+                          onChange={handleChandoanxacdinhChange}
+                          id="fallot"
+                          type="radio"
+                          name="radioOptions"
+                          className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                        />
+                        <label
+                          htmlFor="fallot"
+                          className="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300"
+                        >
+                          Tứ chứng Fallot
+                        </label>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-8 mb-4">
+                      <div className="flex items-center">
+                        <input
+                          id="binhthuong"
+                          type="radio"
+                          name="radioOptions"
+                          value="Bình thường"
+                          onChange={handleChandoanxacdinhChange}
+                          className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                        />
+                        <label
+                          htmlFor="binhthuong"
+                          className="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300"
+                        >
+                          Bình thường
+                        </label>
+                      </div>
+                      <div className="flex items-center">
+                        <input
+                          type="radio"
+                          name="radioOptions"
+                          id="other"
+                          value="other"
+                          checked={selectedRadio === "other"}
+                          className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                          onChange={handleRadioChange}
+                        />
+                        <label
+                          htmlFor="other"
+                          className="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300"
+                        >
+                          Khác
+                        </label>
+                      </div>
+                    </div>
+
+                    {selectedRadio === "other" && (
+                      <div className="mb-4">
+                        <textarea
+                          id="chandoanxacdinh"
+                          onChange={handleOtherChandoanxacdinhChange}
+                          rows={4}
+                          className="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                          placeholder="Ghi chẩn đoán xác định tại đây"
+                          defaultValue={chandoanxacdinh || ""}
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
