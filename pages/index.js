@@ -1,5 +1,6 @@
 import { faHeartbeat } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import React from "react";
 export default function MedicalRecordHome() {
   return (
     <div>
@@ -24,14 +25,14 @@ export default function MedicalRecordHome() {
             </span>
           </a>
           <div className="flex md:order-2">
-            <a
+            {/* <a
               type="button"
               href="/Hospital/LoginPage"
               target="_blank"
               className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 text-center mr-3 md:mr-0 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
             >
               Hospital
-            </a>
+            </a> */}
             <button
               data-collapse-toggle="navbar-sticky"
               type="button"
@@ -66,7 +67,23 @@ export default function MedicalRecordHome() {
                   className="block py-2 pl-3 pr-4 text-white bg-blue-700 rounded md:bg-transparent md:text-blue-700 md:p-0 md:dark:text-blue-500"
                   aria-current="page"
                 >
-                  Home
+                  Trang chủ
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/Instruct"
+                  className="block py-2 pl-3 pr-4 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 md:dark:hover:text-blue-500 dark:text-white dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent dark:border-gray-700"
+                >
+                  Hướng dẫn
+                </a>
+              </li>
+              {/* <li>
+                <a
+                  href="#"
+                  className="block py-2 pl-3 pr-4 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 md:dark:hover:text-blue-500 dark:text-white dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent dark:border-gray-700"
+                >
+                  Đặt lịch khám
                 </a>
               </li>
               <li>
@@ -74,56 +91,44 @@ export default function MedicalRecordHome() {
                   href="#"
                   className="block py-2 pl-3 pr-4 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 md:dark:hover:text-blue-500 dark:text-white dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent dark:border-gray-700"
                 >
-                  About
+                  Bệnh viện
                 </a>
-              </li>
-              <li>
-                <a
-                  href="#"
-                  className="block py-2 pl-3 pr-4 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 md:dark:hover:text-blue-500 dark:text-white dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent dark:border-gray-700"
-                >
-                  Services
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#"
-                  className="block py-2 pl-3 pr-4 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 md:dark:hover:text-blue-500 dark:text-white dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent dark:border-gray-700"
-                >
-                  Contact
-                </a>
-              </li>
+              </li> */}
             </ul>
           </div>
         </div>
       </nav>
 
-      <section className="bg-white dark:bg-gray-900 bg-[url('https://flowbite.s3.amazonaws.com/docs/jumbotron/hero-pattern.svg')] dark:bg-[url('https://flowbite.s3.amazonaws.com/docs/jumbotron/hero-pattern-dark.svg')]">
-        <div
-          className="py-8 px-4 mx-auto max-w-screen-xl text-center lg:py-16 z-10 relative"
-          style={{ marginTop: "100px" }}
-        >
-          <h1 className="mb-4 text-4xl font-extrabold tracking-tight leading-none text-gray-900 md:text-5xl lg:text-6xl dark:text-white">
+      <div>
+        <img
+          className=" w-full mt-10   "
+          src="https://i.ibb.co/x38VRVp/thumbnaill.png"
+        />
+      </div>
+
+      <section className="bg-white mt-2 dark:bg-gray-900 bg-[url('https://flowbite.s3.amazonaws.com/docs/jumbotron/hero-pattern.svg')] dark:bg-[url('https://flowbite.s3.amazonaws.com/docs/jumbotron/hero-pattern-dark.svg')]">
+        <div className="py-8 px-4 mx-auto max-w-screen-xl text-center lg:py-16 z-10 relative">
+          <h1 className="mb-4 text-xl font-extrabold tracking-tight leading-none text-gray-900 md:text-5xl lg:text-6xl dark:text-white">
             <span className="text-transparent bg-clip-text   bg-gradient-to-bl from-purple-600 to-blue-500 hover:bg-gradient-to-r">
               Medchain
             </span>{" "}
-            - Health{" "}
+            - Giải pháp{" "}
             <span className="underline underline-offset-3 decoration-8 decoration-blue-400 dark:decoration-blue-600">
               Blockchain
             </span>{" "}
-            Solution
+            bệnh án
           </h1>
           <p className="mb-8 text-lg font-normal text-gray-500 lg:text-xl sm:px-16 lg:px-48 dark:text-gray-200">
-            Revolutionizing medical record storage and protection through
-            blockchain. Ensuring confidentiality, immutability, and secure
-            access to vital patient information.
+            Cách mạng hóa việc lưu trữ và bảo vệ hồ sơ y tế thông qua chuỗi
+            khối. Đảm bảo tính bảo mật, tính bất biến và quyền truy cập an toàn
+            vào thông tin quan trọng của bệnh nhân.
           </p>
           <a
             href="/Hospital/LoginPage"
             target="_blank"
             className="inline-flex mb-20 items-center justify-center px-5 py-3 text-base font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 dark:focus:ring-blue-900"
           >
-            Hospital Login
+            Quản lý bệnh án
             <svg
               className="w-5 h-5 ml-2 -mr-1"
               fill="currentColor"
@@ -163,11 +168,11 @@ export default function MedicalRecordHome() {
               </div>
               <div className="mt-3 sm:pr-8">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  Access With Metamask Wallet
+                  Truy cập bằng ví Metamask
                 </h3>
                 <p className="text-base font-normal text-gray-500 dark:text-gray-400">
-                  Effortlessly safeguard your medical records with the
-                  user-friendly Metamask wallet.
+                  Dễ dàng bảo vệ hồ sơ y tế của bạn với ví Metamask thân thiện
+                  với người dùng.
                 </p>
               </div>
             </li>
@@ -195,11 +200,12 @@ export default function MedicalRecordHome() {
               </div>
               <div className="mt-3 sm:pr-8">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  Medical Record Provider
+                  Nhà cung cấp hồ sơ y tế
                 </h3>
 
                 <p className="text-base font-normal text-gray-500 dark:text-gray-400">
-                  Trust your medical records to our experienced doctors.
+                  Hãy tin tưởng giao hồ sơ y tế của bạn cho các bác sĩ giàu kinh
+                  nghiệm của chúng tôi.
                 </p>
               </div>
             </li>
@@ -227,22 +233,20 @@ export default function MedicalRecordHome() {
               </div>
               <div className="mt-3 sm:pr-8">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  Store Data In{" "}
+                  Lưu trữ dữ liệu trong{" "}
                   <span className="underline underline-offset-1 decoration-4 decoration-blue-400 dark:decoration-blue-600">
                     Blockchain
                   </span>
                 </h3>
 
                 <p className="text-base font-normal text-gray-500 dark:text-gray-400">
-                  No more lost or incomplete records - enjoy peace of mind with
-                  our convenient solution.
+                  Không còn lo hồ sơ bị thất lạc hoặc bị chỉnh sửa - hãy yên tâm
+                  với giải pháp của chúng tôi.
                 </p>
               </div>
             </li>
           </ol>
         </div>
-
-        <div className="bg-gradient-to-b from-blue-50 to-transparent dark:from-blue-900 w-full h-full absolute top-0 left-0 z-0" />
       </section>
 
       <section className="bg-white dark:bg-gray-900">
@@ -252,24 +256,25 @@ export default function MedicalRecordHome() {
               href="#"
               className="bg-blue-100 text-blue-800 text-xs font-medium inline-flex items-center px-2.5 py-0.5 rounded-md dark:bg-gray-700 dark:text-blue-400 mb-2"
             >
-              Patient
+              Bệnh nhân
             </a>
             <h1 className="text-gray-900 dark:text-white text-3xl md:text-5xl font-extrabold mb-2">
-              Get NFT Medical Records
+              Nhận hồ sơ y tế NFT
             </h1>
 
             <p className="text-lg font-normal text-gray-500 dark:text-gray-400 mb-6">
-              At Medchain, we bring innovation to healthcare by introducing NFT
-              (Non-Fungible Token) medical records. With our cutting-edge
-              technology, you can now securely store and access your medical
-              records in a decentralized and tamper-proof manner.
+              Tại Medchain, chúng tôi mang đến sự đổi mới cho lĩnh vực chăm sóc
+              sức khỏe bằng cách giới thiệu NFT hồ sơ y tế (Mã thông báo không
+              thể thay thế). Với công nghệ tiên tiến của chúng tôi, giờ đây bạn
+              có thể lưu trữ và truy cập y tế của mình một cách an toàn và chống
+              giả mạo.
             </p>
             <a
               href="/Patient/LoginPage"
               target="_blank"
               className="relative inline-flex justify-center items-center py-2.5 px-5 text-base font-medium text-center text-white rounded-lg bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 dark:focus:ring-blue-900"
             >
-              Patient Login
+              Đặt lịch khám
               <svg
                 aria-hidden="true"
                 className="ml-2 -mr-1 w-4 h-4"
@@ -288,56 +293,56 @@ export default function MedicalRecordHome() {
           <div className="grid md:grid-cols-2 gap-8">
             <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-8 md:p-12">
               <a className="bg-green-100 text-green-800 text-xs font-medium inline-flex items-center px-2.5 py-0.5 rounded-md dark:bg-gray-700 dark:text-green-400 mb-2">
-                Doctor
+                Bác sĩ
               </a>
               <h2 className="text-gray-900 dark:text-white text-3xl font-extrabold mb-2">
-                Conduct And Provide Medical Records
+                Tiến hành khám và cung cấp hồ sơ bệnh án
               </h2>
               <p className="text-lg font-normal text-gray-500 dark:text-gray-400 mb-4">
-                Empower healthcare professionals to conduct thorough
-                examinations and provide accurate medical records efficiently
-                with our secure and seamless platform.
+                Các bác sĩ giàu kinh nghiệm của chúng tôi sẽ tiến hành kỹ lưỡng
+                khám và cung cấp hồ sơ bệnh án chính xác hiệu quả với nền tảng
+                an toàn và liền mạch của chúng tôi.
               </p>
               <a
                 href="/Register/RequestAccount"
                 target="_blank"
                 className="text-blue-600 dark:text-blue-500 hover:underline font-medium text-lg inline-flex items-center"
               >
-                Request Account
+                Yêu cầu cấp tài khoản
               </a>
               <a
                 href="/Doctor/LoginPage"
                 target="_blank"
                 className="text-blue-600 ml-5 dark:text-blue-500 hover:underline font-medium text-lg inline-flex items-center"
               >
-                Login
+                Đăng nhập
               </a>
             </div>
             <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-8 md:p-12">
               <a className="bg-purple-100 text-purple-800 text-xs font-medium inline-flex items-center px-2.5 py-0.5 rounded-md dark:bg-gray-700 dark:text-purple-400 mb-2">
-                Staff
+                Nhân viên
               </a>
               <h2 className="text-gray-900 dark:text-white text-3xl font-extrabold mb-2">
-                Provide Professional Support To Patients
+                Cung cấp sự hỗ trợ chuyên nghiệp cho bệnh nhân
               </h2>
               <p className="text-lg font-normal text-gray-500 dark:text-gray-400 mb-4">
-                Efficiently support patients in scheduling their medical
-                appointments. We offer comprehensive assistance to help patients
-                conveniently book their healthcare visits.
+                Hỗ trợ bệnh nhân hiệu quả trong việc lên lịch khám bệnh. Chúng
+                tôi cung cấp hỗ trợ toàn diện để giúp bệnh nhân thuận tiện đặt
+                khám.
               </p>
               <a
                 href="/Register/RequestAccount"
                 target="_blank"
                 className="text-blue-600 dark:text-blue-500 hover:underline font-medium text-lg inline-flex items-center"
               >
-                Request Account
+                Yêu cầu cấp tài khoản
               </a>
               <a
                 href="/Staff/LoginPage"
                 target="_blank"
                 className="text-blue-600 ml-5 dark:text-blue-500 hover:underline font-medium text-lg inline-flex items-center"
               >
-                Login
+                Đăng nhập
               </a>
             </div>
           </div>
@@ -346,7 +351,7 @@ export default function MedicalRecordHome() {
 
       <footer className="bg-white rounded-lg shadow dark:bg-gray-900 m-4">
         <div className="w-full max-w-screen-xl mx-auto p-4 md:py-8">
-          <div className="sm:flex sm:items-center sm:justify-between">
+          {/* <div className="sm:flex sm:items-center sm:justify-between">
             <a
               href="https://flowbite.com/"
               className="flex items-center mb-4 sm:mb-0"
@@ -382,10 +387,10 @@ export default function MedicalRecordHome() {
                 </a>
               </li>
             </ul>
-          </div>
+          </div> */}
           <hr className="my-6 border-gray-200 sm:mx-auto dark:border-gray-700 lg:my-8" />
           <span className="block text-sm text-gray-500 sm:text-center dark:text-gray-400">
-            Medchain
+            © 2023 Medchain. Đã đăng ký Bản quyền.
           </span>
         </div>
       </footer>
