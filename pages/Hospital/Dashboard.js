@@ -12,11 +12,13 @@ import {
   RadialLinearScale,
   Tooltip,
 } from "chart.js";
+import EthCrypto from "eth-crypto";
 import jwt_decode from "jwt-decode";
 import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
 import { Bar, Pie, Radar } from "react-chartjs-2";
 import Navigation from "../Common/Navigation";
+
 const Dashboard = () => {
   const router = useRouter();
   const [mintedRecords, setMintedRecords] = useState([]);
@@ -39,21 +41,35 @@ const Dashboard = () => {
   const [totalHeartDisease, setTotalHeartDisease] = useState([]);
   const [totalNormal, setTotalNormal] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const isValidHttpsLink = (link) => {
+    // Regular expression pattern to match HTTPS links
+    const httpsPattern = /^https:\/\//i;
+    return httpsPattern.test(link);
+  };
   const fetchData = async (tokenURI) => {
-    try {
-      const response = await axios.get(tokenURI);
-      const data = response.data?.chuyen_mon?.chan_doan_xac_dinh;
-      console.log(data);
-      // data.map((item) => console.log(item));
-      if (data !== undefined && data !== "" && data !== "Bình thường") {
-        setTotalHeartDisease((prevData) => [...prevData, data]);
+    if (!isValidHttpsLink(tokenURI)) {
+      try {
+        const response = JSON.parse(tokenURI);
+
+        const decryptedData = await EthCrypto.decryptWithPrivateKey(
+          process.env.PRIVATE_KEY, // privateKey
+          response
+          // encrypted-data
+        );
+        const decryptedDataJson = JSON.parse(decryptedData);
+        const data = decryptedDataJson?.chuyen_mon?.chan_doan_xac_dinh;
+
+        // data.map((item) => console.log(item));
+        if (data !== undefined && data !== "" && data !== "Bình thường") {
+          setTotalHeartDisease((prevData) => [...prevData, data]);
+        }
+        if (data === "Bình thường") {
+          setTotalNormal((prevData) => [...prevData, data]);
+        }
+      } catch (error) {
+        // Handle the error gracefully (you can customize the error handling here)
+        console.error(`Error fetching data for tokenURI: ${tokenURI}`, error);
       }
-      if (data === "Bình thường") {
-        setTotalNormal((prevData) => [...prevData, data]);
-      }
-    } catch (error) {
-      // Handle the error gracefully (you can customize the error handling here)
-      console.error(`Error fetching data for tokenURI: ${tokenURI}`, error);
     }
   };
 

@@ -6,6 +6,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import axios from "axios";
+import EthCrypto from "eth-crypto";
 import jwt_decode from "jwt-decode";
 import Link from "next/link";
 import { useRouter } from "next/router";
@@ -17,6 +18,7 @@ const Doctor = () => {
   const [nft, setNFT] = useState({});
   const [address, setAddress] = useState("");
   const [medicalRecordsResult, setMedicalRecordsResult] = useState({});
+  // console.log(medicalRecordsResult);
   const fetchNFTByTokenId = async (address, tokenId) => {
     try {
       const response = await axios.get(
@@ -32,10 +34,16 @@ const Doctor = () => {
   if (tokenURI) {
     const fetchData = async () => {
       try {
-        const response = await axios.get(tokenURI);
+        // const response = await axios.get(tokenURI);
 
-        const data = response.data;
-        setMedicalRecordsResult(data);
+        const data = JSON.parse(tokenURI);
+
+        const decryptedData = await EthCrypto.decryptWithPrivateKey(
+          process.env.PRIVATE_KEY, // privateKey
+          data
+          // encrypted-data
+        );
+        setMedicalRecordsResult(JSON.parse(decryptedData));
         // console.log(data);
         // Use the 'data' variable as needed
       } catch (error) {

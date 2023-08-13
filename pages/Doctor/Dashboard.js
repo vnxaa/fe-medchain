@@ -13,11 +13,13 @@ import {
   Tooltip,
 } from "chart.js";
 import ChartDataLabels from "chartjs-plugin-datalabels";
+import EthCrypto from "eth-crypto";
 import jwt_decode from "jwt-decode";
 import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
 import { Bar, Line, Pie, Radar } from "react-chartjs-2";
 import Navigation from "../Common/Navigation";
+
 const Dashboard = () => {
   const router = useRouter();
   const [doctorId, setDoctorId] = useState(null);
@@ -31,22 +33,37 @@ const Dashboard = () => {
   const [totalNormal, setTotalNormal] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   // console.log(totalHeartDisease.length);
-
+  const isValidHttpsLink = (link) => {
+    // Regular expression pattern to match HTTPS links
+    const httpsPattern = /^https:\/\//i;
+    return httpsPattern.test(link);
+  };
   const fetchData = async (tokenURI) => {
-    try {
-      const response = await axios.get(tokenURI);
-      const data = response.data?.chuyen_mon?.chan_doan_xac_dinh;
-      console.log(data);
-      // data.map((item) => console.log(item));
-      if (data !== undefined && data !== "" && data !== "Bình thường") {
-        setTotalHeartDisease((prevData) => [...prevData, data]);
+    if (!isValidHttpsLink(tokenURI)) {
+      try {
+        // console.log(tokenURI);
+        const response = JSON.parse(tokenURI);
+
+        const decryptedData = await EthCrypto.decryptWithPrivateKey(
+          process.env.PRIVATE_KEY, // privateKey
+          response
+          // encrypted-data
+        );
+        const decryptedDataJson = JSON.parse(decryptedData);
+
+        const data = decryptedDataJson?.chuyen_mon?.chan_doan_xac_dinh;
+
+        // data.map((item) => console.log(item));
+        if (data !== undefined && data !== "" && data !== "Bình thường") {
+          setTotalHeartDisease((prevData) => [...prevData, data]);
+        }
+        if (data === "Bình thường") {
+          setTotalNormal((prevData) => [...prevData, data]);
+        }
+      } catch (error) {
+        // Handle the error gracefully (you can customize the error handling here)
+        console.error(`Error fetching data for tokenURI: ${tokenURI}`, error);
       }
-      if (data === "Bình thường") {
-        setTotalNormal((prevData) => [...prevData, data]);
-      }
-    } catch (error) {
-      // Handle the error gracefully (you can customize the error handling here)
-      console.error(`Error fetching data for tokenURI: ${tokenURI}`, error);
     }
   };
 
@@ -55,7 +72,7 @@ const Dashboard = () => {
       setIsLoading(true);
       const response = await axios.get(`/api/getAllNFTs`);
       const nftsData = response.data;
-      console.log(nftsData);
+      // console.log(nftsData);
       const tokenURIs = nftsData.map((nft) => nft.tokenURI);
 
       // Use a Set to keep track of processed tokenURIs and avoid duplicates
@@ -74,7 +91,7 @@ const Dashboard = () => {
       }
 
       // For debugging purposes, you can log the tokenURIs array
-      console.log(tokenURIs);
+      // console.log(tokenURIs);
 
       // Additional logic can be added here if needed
     } catch (error) {

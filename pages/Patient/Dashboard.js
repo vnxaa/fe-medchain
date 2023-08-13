@@ -12,11 +12,13 @@ import {
   RadialLinearScale,
   Tooltip,
 } from "chart.js";
+import EthCrypto from "eth-crypto";
 import jwt_decode from "jwt-decode";
 import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
 import { PolarArea, Radar } from "react-chartjs-2";
 import Navigation from "../Common/Navigation";
+
 const Dashboard = () => {
   const router = useRouter();
   const [Totalnfts, setTotalNFTs] = useState(0);
@@ -78,13 +80,20 @@ const Dashboard = () => {
   //   cannang,
   //   chieucao
   // );
+  // console.log(tokenURI);
   const fetchData = async () => {
     try {
-      const response = await axios.get(tokenURI);
+      // const response = await axios.get(tokenURI);
 
-      const data = response.data;
-      setMedicalRecordsResult(data);
-      console.log(data);
+      const data = JSON.parse(tokenURI);
+
+      // console.log(data);
+      const decryptedData = await EthCrypto.decryptWithPrivateKey(
+        process.env.PRIVATE_KEY, // privateKey
+        data
+        // encrypted-data
+      );
+      setMedicalRecordsResult(JSON.parse(decryptedData));
       // Use the 'data' variable as needed
     } catch (error) {
       console.error(error);
@@ -96,7 +105,7 @@ const Dashboard = () => {
       setIsLoading(true);
       const response = await axios.get(`/api/nfts?address=${address}`);
       const lastItem = response.data[0];
-      // console.log(lastItem.tokenURI);
+      // console.log(response.data);
       setTokenURI(lastItem?.tokenURI);
       setTotalNFTs(response.data.length);
     } catch (error) {

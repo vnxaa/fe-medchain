@@ -1,4 +1,5 @@
 import axios from "axios";
+import EthCrypto from "eth-crypto";
 import { Contract, ethers } from "ethers";
 import jwt_decode from "jwt-decode";
 import Link from "next/link";
@@ -20,7 +21,7 @@ const MedicalRecord = () => {
   const [showDrawer, setShowDrawer] = useState(false);
   const [reason, setReason] = useState("");
   const [rejectReasons, setRejectReasons] = useState({});
-
+  // console.log(medicalRecordsResult);
   const getRejectReasonsByMedicalRecordId = async (id) => {
     try {
       const response = await axios.get(
@@ -137,20 +138,18 @@ const MedicalRecord = () => {
   }, [medicalRecords]);
 
   const mintNFT = async () => {
+    const publicKey = EthCrypto.publicKeyByPrivateKey(process.env.PRIVATE_KEY);
+
+    const dataToEncrypt = JSON.stringify(medicalRecordsResult);
+    const encrypted = await EthCrypto.encryptWithPublicKey(
+      publicKey, // publicKey
+      dataToEncrypt // message
+    );
+
     try {
       setLoading(true);
-      const response = await axios.post(
-        "https://api.nft.storage/upload",
-        medicalRecordsResult,
-        {
-          headers: {
-            Authorization: `Bearer ${process.env.NFT_STORAGE_KEY}`,
-          },
-        }
-      );
-      const ipfsHash = response.data.value.cid;
-      const tokenUrl = `https://${ipfsHash}.ipfs.nftstorage.link`;
-      // console.log(tokenUrl);
+
+      const tokenUrl = JSON.stringify(encrypted);
       const web3Modal = new Web3Modal();
       const connection = await web3Modal.connect();
       const provider = new ethers.providers.Web3Provider(connection);
@@ -191,6 +190,7 @@ const MedicalRecord = () => {
       setLoading(false);
     }
   };
+
   const createRejectReason = async () => {
     try {
       setLoading(true);

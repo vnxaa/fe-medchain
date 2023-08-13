@@ -388,7 +388,7 @@ const PatientProfile = () => {
                         )}
                         {record.status === "reject" && (
                           <>
-                            <span className="bg-red-100 text-red-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-full dark:bg-red-900 dark:text-red-300">
+                            <span className="whitespace-nowrap bg-red-100 text-red-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-full dark:bg-red-900 dark:text-red-300">
                               Từ chối
                             </span>
                           </>
