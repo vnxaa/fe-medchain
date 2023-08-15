@@ -14,33 +14,17 @@ import React, { useEffect, useState } from "react";
 import Navigation from "../../../Common/Navigation";
 const NFTMedicalRecord = () => {
   const router = useRouter();
+  //   const { medicalRecordId } = router.query;
   const { tokenId } = router.query;
-  const [patientInfo, setPatientInfo] = useState("");
-  const [address, setAddress] = useState("");
+  const [medicalRecords, setMedicalRecords] = useState({});
+  const [showDrawer, setShowDrawer] = useState(false);
+  const [rejectReasons, setRejectReasons] = useState({});
+  const [patientInfo, setPatientInfo] = useState({});
+  const [doctorInfo, setDoctorInfo] = useState({});
+  const [medicalRecordsResult, setMedicalRecordsResult] = useState({});
+  const [doctorId, setDoctorId] = useState(null);
   const [nft, setNFT] = useState({});
 
-  const [medicalRecordsResult, setMedicalRecordsResult] = useState({});
-  const fetchNFTByTokenId = async (address, tokenId) => {
-    try {
-      const response = await axios.get(
-        `/api/nftByTokenId?address=${address}&tokenId=${tokenId}`
-      );
-      setNFT(response.data);
-    } catch (error) {
-      console.error(error);
-    }
-  };
-  const fetchPatientInfo = async (patientId) => {
-    try {
-      const response = await axios.get(
-        `${process.env.service}/api/patient/${patientId}`
-      );
-
-      setPatientInfo(response.data);
-    } catch (error) {
-      console.error(error);
-    }
-  };
   const tokenURI = nft[0]?.tokenURI;
   if (tokenURI) {
     const fetchData = async () => {
@@ -63,6 +47,57 @@ const NFTMedicalRecord = () => {
     };
     fetchData();
   }
+  const handleToggleDrawer = () => {
+    setShowDrawer(!showDrawer);
+  };
+  const fetchNFTByTokenId = async (address, tokenId) => {
+    try {
+      const response = await axios.get(
+        `/api/nftByTokenId?address=${address}&tokenId=${tokenId}`
+      );
+      setNFT(response.data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+  const fetchPatientInfo = async (id) => {
+    try {
+      const response = await axios.get(
+        `${process.env.service}/api/patient/${id}`
+      );
+      const patientData = response.data;
+      setPatientInfo(patientData);
+    } catch (error) {
+      console.error(`Failed to fetch patient information for ID ${id}:`, error);
+    }
+  };
+
+  const fetchDoctorInfo = async (doctorId) => {
+    try {
+      const response = await axios.get(
+        `${process.env.service}/api/doctor/${doctorId}`
+      );
+      const doctorData = response.data;
+      setDoctorInfo(doctorData);
+    } catch (error) {
+      console.error(
+        `Failed to fetch doctor information for ID ${doctorId}:`,
+        error
+      );
+    }
+  };
+  const fetchMedicalRecords = async (id) => {
+    try {
+      const response = await axios.get(
+        `${process.env.service}/api/medicalRecord/${id}`
+      );
+      setMedicalRecords(response.data);
+
+      setMedicalRecordsResult(JSON.parse(response.data.diagnosis[0]));
+    } catch (error) {
+      console.error("Failed to fetch medical records:", error);
+    }
+  };
   useEffect(() => {
     // Get the token from localStorage
     const token = localStorage.getItem("token");
@@ -73,13 +108,14 @@ const NFTMedicalRecord = () => {
         const decoded = jwt_decode(token);
         console.log(decoded);
 
-        // Check if the user is a hospital
-        if (decoded.hospital) {
-          // User is a hospital, allow access to the hospital page
-          console.log("Access granted to hospital page");
+        // Check if the user is a doctor
+        if (decoded?.user?.role === "doctor") {
+          setDoctorId(decoded?.user?._id);
+          // User is a doctor, allow access to the doctor page
+          console.log("Access granted to doctor page");
         } else {
-          // User is not a hospital, redirect to another page or show an error message
-          console.log("Access denied. User is not a hospital");
+          // User is not a doctor, redirect to another page or show an error message
+          console.log("Access denied. User is not a doctor");
           router.push("../Common/Permission");
         }
       } catch (error) {
@@ -88,23 +124,32 @@ const NFTMedicalRecord = () => {
       }
     } else {
       // Token not found, redirect to login page or show an error message
-      // router.push("/Hospital/LoginPage");
+      router.push("/Doctor/LoginPage");
 
       console.log("Token not found. Please log in.");
     }
+    // if (medicalRecordId) {
+    //   fetchMedicalRecords(medicalRecordId);
+    //   getRejectReasonsByMedicalRecordId(medicalRecordId);
+    // }
     if (tokenId) {
       fetchNFTByTokenId(tokenId[1], tokenId[0]);
       fetchPatientInfo(tokenId[2]);
-      setAddress(tokenId[2]);
+      // setAddress(tokenId[2]);
     }
-  }, [tokenId, router]);
-
+  }, [router, tokenId]);
+  useEffect(() => {
+    if (medicalRecords?.patientId && medicalRecords?.doctorId) {
+      fetchPatientInfo(medicalRecords?.patientId);
+      fetchDoctorInfo(medicalRecords?.doctorId);
+    }
+  }, [medicalRecords]);
   return (
     <div>
       <Navigation />
-      <div className="sm:container sm:mx-auto">
+      <div className="sm:container center sm:mx-auto">
         <nav
-          className="flex px-5 mb-2 py-3 text-gray-700 border border-gray-200 rounded-lg bg-gray-50 dark:bg-gray-800 dark:border-gray-700"
+          className="flex px-5 py-3 text-gray-700 border border-gray-200 rounded-lg bg-gray-50 dark:bg-gray-800 dark:border-gray-700"
           aria-label="Breadcrumb"
         >
           <ol className="inline-flex items-center space-x-1 md:space-x-3">
@@ -112,49 +157,7 @@ const NFTMedicalRecord = () => {
             <li>
               <div className="flex items-center">
                 <div className="ml-1 text-sm font-medium text-gray-700 hover:text-blue-600 md:ml-2 dark:text-gray-400 dark:hover:text-white">
-                  <Link href="/Hospital/Patient">Bệnh nhân</Link>
-                </div>
-              </div>
-            </li>
-            <li>
-              <div className="flex items-center">
-                <svg
-                  aria-hidden="true"
-                  className="w-6 h-6 text-gray-400"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                <div className="ml-1 text-sm font-medium text-gray-700 hover:text-blue-600 md:ml-2 dark:text-gray-400 dark:hover:text-white">
-                  <Link href="/Hospital/PatientList">Danh sách bệnh nhân</Link>
-                </div>
-              </div>
-            </li>
-            <li>
-              <div className="flex items-center">
-                <svg
-                  aria-hidden="true"
-                  className="w-6 h-6 text-gray-400"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                <div className="ml-1 text-sm font-medium text-gray-700 hover:text-blue-600 md:ml-2 dark:text-gray-400 dark:hover:text-white">
-                  <a href={`/Hospital/PatientProfile/${address}`}>
-                    Bệnh nhân {patientInfo?.name}
-                  </a>
+                  <Link href="/Doctor/MedicalRecord">Danh sách bệnh án</Link>
                 </div>
               </div>
             </li>
@@ -173,30 +176,48 @@ const NFTMedicalRecord = () => {
                     clipRule="evenodd"
                   />
                 </svg>
-                <span className="ml-1 text-sm font-medium text-blue-600 md:ml-2 ">
-                  Xem bệnh án
+                <span className="ml-1 text-sm font-medium text-gray-500 md:ml-2 dark:text-gray-400">
+                  Bệnh án tim của bệnh nhân{" "}
+                  {medicalRecordsResult?.hanh_chinh?.ho_va_ten}
                 </span>
               </div>
             </li>
           </ol>
         </nav>
-        <div className=" top-0 left-0 right-0 bottom-0 flex items-center justify-center">
+        <div className=" top-0 left-0 mt-2 right-0 bottom-0 flex items-center justify-center">
           <div className=" w-full max-w-2xl">
             {/* Modal content */}
             <div className=" bg-white rounded-lg shadow dark:bg-gray-700">
               {medicalRecordsResult?.hanh_chinh?.ho_va_ten ? (
                 <>
+                  {" "}
                   {/* Modal header */}
                   <div className="flex items-start justify-between p-4 border-b rounded-t dark:border-gray-600">
                     <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
                       Bệnh án tim của bệnh nhi{" "}
                       {medicalRecordsResult?.hanh_chinh?.ho_va_ten}
                     </h3>
-                    <div>
-                      <span className="ml-2 bg-blue-100 text-blue-800 text-sm font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-blue-900 dark:text-blue-300">
-                        NFT
-                      </span>
-                    </div>
+                    {medicalRecords?.status === "minted" && (
+                      <div>
+                        <span className="ml-2 bg-blue-100 text-blue-800 text-sm font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-blue-900 dark:text-blue-300">
+                          NFT
+                        </span>
+                      </div>
+                    )}
+                    {medicalRecords?.status === "draft" && (
+                      <div>
+                        <span className="ml-2 bg-gray-100 text-gray-800 text-sm font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-blue-900 dark:text-blue-300">
+                          Nháp
+                        </span>
+                      </div>
+                    )}
+                    {medicalRecords?.status === "reject" && (
+                      <div>
+                        <span className="ml-2 bg-red-100 text-red-800 text-sm font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-blue-900 dark:text-blue-300">
+                          Từ chối
+                        </span>
+                      </div>
+                    )}
                   </div>
                   {/* Modal body */}
                   <div className="p-6 max-h-[calc(100vh-24rem)] overflow-y-auto">
@@ -412,48 +433,42 @@ const NFTMedicalRecord = () => {
                   </div>
                   {/* Modal footer */}
                   <div className="flex items-center p-6 space-x-2 border-t border-gray-200 rounded-b dark:border-gray-600">
-                    {/* <button
-                  //   onClick={mintNFT}
-                  data-modal-hide="staticModal"
-                  type="button"
-                  className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-                >
-                  Tạo NFT bệnh án
-                </button>
-                <button
-                  //   onClick={toggleModal}
-                  data-modal-hide="staticModal"
-                  type="button"
-                  className="text-gray-500 bg-white hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-blue-300 rounded-lg border border-gray-200 text-sm font-medium px-5 py-2.5 hover:text-gray-900 focus:z-10 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-500 dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-gray-600"
-                >
-                  Từ chối
-                </button> */}
+                    {medicalRecords?.status === "reject" && (
+                      <>
+                        <button
+                          onClick={handleToggleDrawer}
+                          data-modal-hide="staticModal"
+                          type="button"
+                          className="text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                        >
+                          Xem lý do
+                        </button>
+                      </>
+                    )}
                   </div>
                 </>
               ) : (
-                <>
-                  <div className="text-center">
-                    <div>
-                      <svg
-                        aria-hidden="true"
-                        className="inline w-8 h-8 mr-2 text-gray-200 animate-spin dark:text-gray-600 fill-blue-600"
-                        viewBox="0 0 100 101"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
-                          fill="currentColor"
-                        />
-                        <path
-                          d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
-                          fill="currentFill"
-                        />
-                      </svg>
-                      <span className="sr-only">Loading...</span>
-                    </div>
+                <div className="text-center">
+                  <div>
+                    <svg
+                      aria-hidden="true"
+                      className="inline w-8 h-8 mr-2 text-gray-200 animate-spin dark:text-gray-600 fill-blue-600"
+                      viewBox="0 0 100 101"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
+                        fill="currentColor"
+                      />
+                      <path
+                        d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
+                        fill="currentFill"
+                      />
+                    </svg>
+                    <span className="sr-only">Loading...</span>
                   </div>
-                </>
+                </div>
               )}
             </div>
           </div>

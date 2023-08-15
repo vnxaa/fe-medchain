@@ -13,6 +13,7 @@ async function getNFTs(address) {
         from
         to
         tokenURI
+        blockNumber
         timestamp
         transactionHash
       }

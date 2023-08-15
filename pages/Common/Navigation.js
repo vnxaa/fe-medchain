@@ -447,7 +447,7 @@ const Navigation = () => {
                           : undefined
                       }
                     >
-                      Bệnh án
+                      Lịch sử bệnh án
                     </Link>
                   </div>
                 </li>

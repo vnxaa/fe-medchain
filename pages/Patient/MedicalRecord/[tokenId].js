@@ -17,6 +17,7 @@ const Doctor = () => {
   const { tokenId } = router.query;
   const [nft, setNFT] = useState({});
   const [address, setAddress] = useState("");
+  const [patientInfo, setPatientInfo] = useState("");
   const [medicalRecordsResult, setMedicalRecordsResult] = useState({});
   // console.log(medicalRecordsResult);
   const fetchNFTByTokenId = async (address, tokenId) => {
@@ -65,6 +66,7 @@ const Doctor = () => {
 
         // Check if the user is a patient
         if (decoded.patient) {
+          setPatientInfo(decoded.patient);
           setAddress(decoded.patient.walletAddress);
           // User is a patient, allow access to the patient page
           console.log("Access granted to patient page");
@@ -102,7 +104,7 @@ const Doctor = () => {
             <li>
               <div className="flex items-center">
                 <div className="ml-1 text-sm font-medium text-gray-700 hover:text-blue-600 md:ml-2 dark:text-gray-400 dark:hover:text-white">
-                  <Link href="/Patient/MedicalRecord">Danh sách bệnh án</Link>
+                  <Link href="/Patient/MedicalRecord">Lịch sử bệnh án</Link>
                 </div>
               </div>
             </li>
@@ -131,7 +133,7 @@ const Doctor = () => {
           </ol>
         </nav>
 
-        <div className=" top-0 left-0 right-0 bottom-0 flex items-center justify-center">
+        <div className=" top-0 left-0 mt-2 right-0 bottom-0 flex items-center justify-center">
           <div className=" w-full max-w-2xl">
             {/* Modal content */}
             <div className=" bg-white rounded-lg shadow dark:bg-gray-700">
@@ -154,201 +156,212 @@ const Doctor = () => {
                     <p className="block  text-xl font-medium text-gray-900 dark:text-white">
                       A, Hành chính:
                     </p>
+                    <div className="ml-2">
+                      <div className="block ">
+                        <p className="inline   text-base font-medium text-gray-900 dark:text-white">
+                          1, Họ và tên:{" "}
+                        </p>
+                        <p className="inline text-sm font-normal leading-relaxed text-gray-900 dark:text-white">
+                          {medicalRecordsResult?.hanh_chinh?.ho_va_ten}
+                        </p>
+                      </div>
 
-                    <div className="block">
-                      <p className="inline text-base font-medium text-gray-900 dark:text-white">
-                        1, Họ và tên:{" "}
+                      <div className="block">
+                        <p className="inline text-base font-medium text-gray-900 dark:text-white">
+                          2, Giới tính:{" "}
+                        </p>
+                        <p className="inline text-sm font-normal leading-relaxed text-gray-900 dark:text-white">
+                          {medicalRecordsResult?.hanh_chinh?.gioi_tinh &&
+                            `${
+                              medicalRecordsResult?.hanh_chinh?.gioi_tinh
+                                .charAt(0)
+                                .toUpperCase() +
+                              medicalRecordsResult?.hanh_chinh?.gioi_tinh.slice(
+                                1
+                              )
+                            }`}
+                        </p>
+                      </div>
+
+                      <div className="block">
+                        <p className="inline text-base font-medium text-gray-900 dark:text-white">
+                          3, Sinh ngày:{" "}
+                        </p>
+                        <p className="inline text-sm font-normal leading-relaxed text-gray-900 dark:text-white">
+                          {new Date(
+                            medicalRecordsResult?.hanh_chinh?.sinh_ngay
+                          ).toLocaleDateString("en-GB")}
+                        </p>
+                      </div>
+
+                      <div className="block">
+                        <p className="inline text-base font-medium text-gray-900 dark:text-white">
+                          4, Địa chỉ:{" "}
+                        </p>
+                        <p className="inline text-sm font-normal leading-relaxed text-gray-900 dark:text-white">
+                          {medicalRecordsResult?.hanh_chinh?.dia_chi}
+                        </p>
+                      </div>
+
+                      <p className="block  text-base font-medium text-gray-900 dark:text-white">
+                        5, Thông tin liên lạc:
                       </p>
-                      <p className="inline text-sm font-normal leading-relaxed text-gray-900 dark:text-white">
-                        {medicalRecordsResult?.hanh_chinh?.ho_va_ten}
-                      </p>
+                      <div className="text-sm ml-2 leading-relaxed text-gray-900 dark:text-white">
+                        {medicalRecordsResult?.hanh_chinh?.thong_tin_lien_lac
+                          ?.bo && (
+                          <div className="text-sm font-normal leading-relaxed text-gray-900 dark:text-white">
+                            {
+                              medicalRecordsResult?.hanh_chinh
+                                .thong_tin_lien_lac.bo
+                            }
+                          </div>
+                        )}
+                        {medicalRecordsResult.hanh_chinh?.thong_tin_lien_lac
+                          ?.me && (
+                          <div className="text-sm font-normal leading-relaxed text-gray-900 dark:text-white">
+                            {
+                              medicalRecordsResult?.hanh_chinh
+                                ?.thong_tin_lien_lac?.me
+                            }
+                          </div>
+                        )}
+                      </div>
                     </div>
-
-                    <div className="block">
-                      <p className="inline text-base font-medium text-gray-900 dark:text-white">
-                        2, Giới tính:{" "}
-                      </p>
-                      <p className="inline text-sm font-normal leading-relaxed text-gray-900 dark:text-white">
-                        {medicalRecordsResult?.hanh_chinh?.gioi_tinh &&
-                          `${
-                            medicalRecordsResult?.hanh_chinh?.gioi_tinh
-                              .charAt(0)
-                              .toUpperCase() +
-                            medicalRecordsResult?.hanh_chinh?.gioi_tinh.slice(1)
-                          }`}
-                      </p>
-                    </div>
-
-                    <div className="block">
-                      <p className="inline text-base font-medium text-gray-900 dark:text-white">
-                        3, Sinh ngày:{" "}
-                      </p>
-                      <p className="inline text-sm font-normal leading-relaxed text-gray-900 dark:text-white">
-                        {new Date(
-                          medicalRecordsResult?.hanh_chinh?.sinh_ngay
-                        ).toLocaleDateString("en-GB")}
-                      </p>
-                    </div>
-
-                    <div className="block">
-                      <p className="inline text-base font-medium text-gray-900 dark:text-white">
-                        4, Địa chỉ:{" "}
-                      </p>
-                      <p className="inline text-sm font-normal leading-relaxed text-gray-900 dark:text-white">
-                        {medicalRecordsResult?.hanh_chinh?.dia_chi}
-                      </p>
-                    </div>
-
-                    <p className="block  text-base font-medium text-gray-900 dark:text-white">
-                      5, Thông tin liên lạc:
-                    </p>
-                    <div className="text-sm leading-relaxed text-gray-900 dark:text-white">
-                      {medicalRecordsResult?.hanh_chinh?.thong_tin_lien_lac
-                        ?.bo && (
-                        <div className="text-sm font-normal leading-relaxed text-gray-900 dark:text-white">
-                          {
-                            medicalRecordsResult?.hanh_chinh.thong_tin_lien_lac
-                              .bo
-                          }
-                        </div>
-                      )}
-                      {medicalRecordsResult.hanh_chinh?.thong_tin_lien_lac
-                        ?.me && (
-                        <div className="text-sm font-normal leading-relaxed text-gray-900 dark:text-white">
-                          {
-                            medicalRecordsResult?.hanh_chinh?.thong_tin_lien_lac
-                              ?.me
-                          }
-                        </div>
-                      )}
-                    </div>
-
                     <p className="block  text-xl font-medium text-gray-900 dark:text-white">
                       B, Chuyên môn:
                     </p>
-                    <p className="block  text-lg font-medium text-gray-900 dark:text-white">
-                      1, Lý do vào viện:
-                    </p>
-                    <p className="text-sm leading-relaxed text-gray-900 dark:text-white">
-                      {medicalRecordsResult?.chuyen_mon?.ly_do_vao_vien}
-                    </p>
-                    <p className="block  text-lg font-medium text-gray-900 dark:text-white">
-                      2, Bệnh sử:
-                    </p>
-                    <p className="text-sm leading-relaxed text-gray-900 dark:text-white">
-                      {medicalRecordsResult?.chuyen_mon?.benh_su}
-                    </p>
-                    <p className="block  text-lg font-medium text-gray-900 dark:text-white">
-                      3, Tiền sử:
-                    </p>
-                    <p className="block  text-base font-medium text-gray-900 dark:text-white">
-                      3.1, Tiền sử sản khoa:
-                    </p>
-                    <p className="text-sm leading-relaxed text-gray-900 dark:text-white">
-                      {
-                        medicalRecordsResult?.chuyen_mon?.tien_su
-                          ?.tien_su_san_khoa
-                      }
-                    </p>
-                    <p className="block  text-base font-medium text-gray-900 dark:text-white">
-                      3.2, Tiền sử bệnh tật:
-                    </p>
-                    <p className="text-sm leading-relaxed text-gray-900 dark:text-white">
-                      {
-                        medicalRecordsResult?.chuyen_mon?.tien_su
-                          ?.tien_su_benh_tat
-                      }
-                    </p>
-                    <p className="block  text-base font-medium text-gray-900 dark:text-white">
-                      3.3, Tiền sử ngoại khoa:
-                    </p>
-                    <p className="text-sm leading-relaxed text-gray-900 dark:text-white">
-                      {
-                        medicalRecordsResult?.chuyen_mon?.tien_su
-                          ?.tien_su_ngoai_khoa
-                      }
-                    </p>
-                    <p className="block  text-base font-medium text-gray-900 dark:text-white">
-                      3.4, Tiền sử dị ứng:
-                    </p>
-                    <p className="text-sm leading-relaxed text-gray-900 dark:text-white">
-                      {
-                        medicalRecordsResult?.chuyen_mon?.tien_su
-                          ?.tien_su_di_ung
-                      }
-                    </p>
-                    <p className="block  text-base font-medium text-gray-900 dark:text-white">
-                      3.5, Dinh dưỡng:
-                    </p>
-                    <p className="text-sm leading-relaxed text-gray-900 dark:text-white">
-                      {medicalRecordsResult?.chuyen_mon?.tien_su?.dinh_duong}
-                    </p>
-                    <p className="block  text-base font-medium text-gray-900 dark:text-white">
-                      3.6, Phát triển tâm thần vận động:
-                    </p>
-                    <p className="text-sm leading-relaxed text-gray-900 dark:text-white">
-                      {
-                        medicalRecordsResult?.chuyen_mon?.tien_su
-                          ?.phat_trien_tam_than_van_dong
-                      }
-                    </p>
-                    <p className="block  text-base font-medium text-gray-900 dark:text-white">
-                      3.7, Tiêm chủng:
-                    </p>
-                    <p className="text-sm leading-relaxed text-gray-900 dark:text-white">
-                      {medicalRecordsResult?.chuyen_mon?.tien_su?.tiem_chung}
-                    </p>
-                    <p className="block  text-lg font-medium text-gray-900 dark:text-white">
-                      4, Khám toàn thân:
-                    </p>
-                    <p className="block  text-base font-medium text-gray-900 dark:text-white">
-                      4.1, Dấu hiệu sinh tồn:
-                    </p>
-                    <p className="text-sm leading-relaxed text-gray-900 dark:text-white">
-                      {
-                        medicalRecordsResult?.chuyen_mon?.kham_toan_than
-                          ?.dau_hieu_sinh_ton
-                      }
-                    </p>
-                    <p className="block  text-lg font-medium text-gray-900 dark:text-white">
-                      5, Khám cơ quan:
-                    </p>
-                    <p className="block  text-base font-medium text-gray-900 dark:text-white">
-                      5.1, Tim mạch:
-                    </p>
-                    <p className="text-sm leading-relaxed text-gray-900 dark:text-white">
-                      {medicalRecordsResult?.chuyen_mon?.kham_co_quan?.tim_mach}
-                    </p>
-                    <p className="block  text-base font-medium text-gray-900 dark:text-white">
-                      5.2, Hô hấp:
-                    </p>
-                    <p className="text-sm leading-relaxed text-gray-900 dark:text-white">
-                      {medicalRecordsResult?.chuyen_mon?.kham_co_quan?.ho_hap}
-                    </p>
-                    <p className="block  text-base font-medium text-gray-900 dark:text-white">
-                      5.3, Tiêu hóa:
-                    </p>
-                    <p className="text-sm leading-relaxed text-gray-900 dark:text-white">
-                      {medicalRecordsResult?.chuyen_mon?.kham_co_quan?.tieu_hoa}
-                    </p>
-                    <p className="block  text-lg font-medium text-gray-900 dark:text-white">
-                      6, Tóm tắt bệnh án:
-                    </p>
-                    <p className="text-sm leading-relaxed text-gray-900 dark:text-white">
-                      {medicalRecordsResult?.chuyen_mon?.tomtatbenhan}
-                    </p>
-                    <p className="block  text-lg font-medium text-gray-900 dark:text-white">
-                      7, Chẩn đoán sơ bộ:
-                    </p>
-                    <p className="text-sm leading-relaxed text-gray-900 dark:text-white">
-                      {medicalRecordsResult?.chuyen_mon?.chan_doan_so_bo}
-                    </p>
-                    <p className="block  text-lg font-medium text-gray-900 dark:text-white">
-                      8, Chẩn đoán xác định:
-                    </p>
-                    <p className="text-sm leading-relaxed text-gray-900 dark:text-white">
-                      {medicalRecordsResult?.chuyen_mon?.chan_doan_xac_dinh}
-                    </p>
+
+                    <div className="ml-2">
+                      <p className="block  text-lg font-medium text-gray-900 dark:text-white">
+                        1, Lý do vào viện:
+                      </p>
+                      <p className="text-sm ml-2 leading-relaxed text-gray-900 dark:text-white">
+                        {medicalRecordsResult?.chuyen_mon?.ly_do_vao_vien}
+                      </p>
+                      <p className="block  text-lg font-medium text-gray-900 dark:text-white">
+                        2, Bệnh sử:
+                      </p>
+                      <p className="text-sm ml-2 leading-relaxed text-gray-900 dark:text-white">
+                        {medicalRecordsResult?.chuyen_mon?.benh_su}
+                      </p>
+                      <p className="block  text-lg font-medium text-gray-900 dark:text-white">
+                        3, Tiền sử:
+                      </p>
+                      <p className="block  ml-2 text-base font-medium text-gray-900 dark:text-white">
+                        3.1, Tiền sử sản khoa:
+                      </p>
+                      <p className="text-sm ml-4 leading-relaxed text-gray-900 dark:text-white">
+                        {
+                          medicalRecordsResult?.chuyen_mon?.tien_su
+                            ?.tien_su_san_khoa
+                        }
+                      </p>
+                      <p className="block ml-2  text-base font-medium text-gray-900 dark:text-white">
+                        3.2, Tiền sử bệnh tật:
+                      </p>
+                      <p className="text-sm ml-4 leading-relaxed text-gray-900 dark:text-white">
+                        {
+                          medicalRecordsResult?.chuyen_mon?.tien_su
+                            ?.tien_su_benh_tat
+                        }
+                      </p>
+                      <p className="block  ml-2 text-base font-medium text-gray-900 dark:text-white">
+                        3.3, Tiền sử ngoại khoa:
+                      </p>
+                      <p className="text-sm ml-4 leading-relaxed text-gray-900 dark:text-white">
+                        {
+                          medicalRecordsResult?.chuyen_mon?.tien_su
+                            ?.tien_su_ngoai_khoa
+                        }
+                      </p>
+                      <p className="block ml-2  text-base font-medium text-gray-900 dark:text-white">
+                        3.4, Tiền sử dị ứng:
+                      </p>
+                      <p className="text-sm ml-4 leading-relaxed text-gray-900 dark:text-white">
+                        {
+                          medicalRecordsResult?.chuyen_mon?.tien_su
+                            ?.tien_su_di_ung
+                        }
+                      </p>
+                      <p className="block ml-2 text-base font-medium text-gray-900 dark:text-white">
+                        3.5, Dinh dưỡng:
+                      </p>
+                      <p className="text-sm ml-4 leading-relaxed text-gray-900 dark:text-white">
+                        {medicalRecordsResult?.chuyen_mon?.tien_su?.dinh_duong}
+                      </p>
+                      <p className="block ml-2 text-base font-medium text-gray-900 dark:text-white">
+                        3.6, Phát triển tâm thần vận động:
+                      </p>
+                      <p className="text-sm ml-4 leading-relaxed text-gray-900 dark:text-white">
+                        {
+                          medicalRecordsResult?.chuyen_mon?.tien_su
+                            ?.phat_trien_tam_than_van_dong
+                        }
+                      </p>
+                      <p className="block ml-2  text-base font-medium text-gray-900 dark:text-white">
+                        3.7, Tiêm chủng:
+                      </p>
+                      <p className="text-sm ml-4 leading-relaxed text-gray-900 dark:text-white">
+                        {medicalRecordsResult?.chuyen_mon?.tien_su?.tiem_chung}
+                      </p>
+                      <p className="block  text-lg font-medium text-gray-900 dark:text-white">
+                        4, Khám toàn thân:
+                      </p>
+                      <p className="block ml-2 text-base font-medium text-gray-900 dark:text-white">
+                        4.1, Dấu hiệu sinh tồn:
+                      </p>
+                      <p className="text-sm ml-4 leading-relaxed text-gray-900 dark:text-white">
+                        {
+                          medicalRecordsResult?.chuyen_mon?.kham_toan_than
+                            ?.dau_hieu_sinh_ton
+                        }
+                      </p>
+                      <p className="block  text-lg font-medium text-gray-900 dark:text-white">
+                        5, Khám cơ quan:
+                      </p>
+                      <p className="block ml-2  text-base font-medium text-gray-900 dark:text-white">
+                        5.1, Tim mạch:
+                      </p>
+                      <p className="text-sm ml-4 leading-relaxed text-gray-900 dark:text-white">
+                        {
+                          medicalRecordsResult?.chuyen_mon?.kham_co_quan
+                            ?.tim_mach
+                        }
+                      </p>
+                      <p className="block ml-2  text-base font-medium text-gray-900 dark:text-white">
+                        5.2, Hô hấp:
+                      </p>
+                      <p className="text-sm ml-4 leading-relaxed text-gray-900 dark:text-white">
+                        {medicalRecordsResult?.chuyen_mon?.kham_co_quan?.ho_hap}
+                      </p>
+                      <p className="block ml-2 text-base font-medium text-gray-900 dark:text-white">
+                        5.3, Tiêu hóa:
+                      </p>
+                      <p className="text-sm  ml-4 leading-relaxed text-gray-900 dark:text-white">
+                        {
+                          medicalRecordsResult?.chuyen_mon?.kham_co_quan
+                            ?.tieu_hoa
+                        }
+                      </p>
+                      <p className="block  text-lg font-medium text-gray-900 dark:text-white">
+                        6, Tóm tắt bệnh án:
+                      </p>
+                      <p className="text-sm leading-relaxed text-gray-900 dark:text-white">
+                        {medicalRecordsResult?.chuyen_mon?.tomtatbenhan}
+                      </p>
+                      <p className="block  text-lg font-medium text-gray-900 dark:text-white">
+                        7, Chẩn đoán sơ bộ:
+                      </p>
+                      <p className="text-sm ml-2 leading-relaxed text-gray-900 dark:text-white">
+                        {medicalRecordsResult?.chuyen_mon?.chan_doan_so_bo}
+                      </p>
+                      <p className="block  text-lg font-medium text-gray-900 dark:text-white">
+                        8, Chẩn đoán xác định:
+                      </p>
+                      <p className="text-sm ml-2 leading-relaxed text-gray-900 dark:text-white">
+                        {medicalRecordsResult?.chuyen_mon?.chan_doan_xac_dinh}
+                      </p>
+                    </div>
                   </div>
                   {/* Modal footer */}
                   <div className="flex items-center p-6 space-x-2 border-t border-gray-200 rounded-b dark:border-gray-600">
@@ -407,7 +420,7 @@ const Doctor = () => {
                       target="_blank"
                       rel="noreferrer noopener"
                       className=" hover:text-blue-500"
-                      href={`https://sepolia.etherscan.io/block/${nft[0]?.blockNumber}`}
+                      href={`https://sepolia.etherscan.io/tx/${nft[0]?.transactionHash}`}
                     >
                       <span className="absolute flex items-center justify-center w-8 h-8 bg-gray-100 rounded-full -left-4 ring-4 ring-white dark:ring-gray-900 dark:bg-gray-700">
                         <FontAwesomeIcon icon={faCube} />
@@ -421,18 +434,20 @@ const Doctor = () => {
                     <span className="absolute flex items-center justify-center w-8 h-8 bg-gray-100 rounded-full -left-4 ring-4 ring-white dark:ring-gray-900 dark:bg-gray-700">
                       <FontAwesomeIcon icon={faArrowRightFromBracket} />
                     </span>
-                    <h3 className="font-medium leading-tight">Ví chuyển</h3>
+                    <h3 className="font-medium leading-tight">Người tạo</h3>
                     <p className="text-sm">
-                      {nft[0]?.from.slice(0, 6)}...{nft[0]?.from.slice(-6)}
+                      {/* {nft[0]?.from.slice(0, 6)}...{nft[0]?.from.slice(-6)} */}
+                      Bệnh Viện Phụ Sản - Nhi Đà Nẵng
                     </p>
                   </li>
                   <li className="mb-10 ml-6">
                     <span className="absolute flex items-center justify-center w-8 h-8 bg-gray-100 rounded-full -left-4 ring-4 ring-white dark:ring-gray-900 dark:bg-gray-700">
                       <FontAwesomeIcon icon={faArrowRightToBracket} />
                     </span>
-                    <h3 className="font-medium leading-tight">Ví nhận</h3>
+                    <h3 className="font-medium leading-tight">Người nhận</h3>
                     <p className="text-sm">
-                      {nft[0]?.to.slice(0, 6)}...{nft[0]?.to.slice(-6)}
+                      {/* {nft[0]?.to.slice(0, 6)}...{nft[0]?.to.slice(-6)} */}
+                      Bệnh nhân {patientInfo?.name}
                     </p>
                   </li>
                   <li className="ml-6">

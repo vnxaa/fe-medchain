@@ -12,6 +12,7 @@ import {
   RadialLinearScale,
   Tooltip,
 } from "chart.js";
+import ChartDataLabels from "chartjs-plugin-datalabels";
 import EthCrypto from "eth-crypto";
 import jwt_decode from "jwt-decode";
 import { useRouter } from "next/router";
@@ -261,12 +262,12 @@ const Dashboard = () => {
       },
       {
         label: "Chiều cao",
-        backgroundColor: "rgba(75, 192, 192, 0.2)",
-        borderColor: "rgba(75, 192, 192, 1)",
-        pointBackgroundColor: "rgba(75, 192, 192, 1)",
+        backgroundColor: "rgba(173, 216, 230, 0.3)", // Light blue background color
+        borderColor: "rgba(173, 216, 230, 1)", // Light blue border color
+        pointBackgroundColor: "rgba(173, 216, 230, 1)", // Light blue point background color
         pointBorderColor: "#fff",
         pointHoverBackgroundColor: "#fff",
-        pointHoverBorderColor: "rgba(75, 192, 192, 1)",
+        pointHoverBorderColor: "rgba(173, 216, 230, 1)",
         data: [NaN, NaN, NaN, NaN, NaN, NaN, chieucao],
       },
     ],
@@ -283,13 +284,22 @@ const Dashboard = () => {
     },
     elements: {
       point: {
-        radius: 10, // Set the desired point size in pixels
+        radius: 20, // Set the desired point size in pixels
       },
       line: {
         tension: 0.5, // Adjust the curve tension for the lines connecting points
       },
     },
     fill: true, // Set to true to fill the area under the radar chart
+    plugins: {
+      datalabels: {
+        display: true, // Display data labels on the points
+
+        font: {
+          size: 18, // Increase the font size of the data label
+        },
+      },
+    },
   };
 
   const dataPolarArea = {
@@ -362,12 +372,16 @@ const Dashboard = () => {
                           fill="currentFill"
                         />
                       </svg>
-                      <span className="sr-only">Loading...</span>
+                      <span>Đang lấy dữ liệu từ Blockchain, vui lòng chờ!</span>
                     </div>
                   )}
                   <div style={{ textAlign: "center" }}>
                     {/* Radar Chart Data and Options */}
-                    <Radar data={data} options={options} />
+                    <Radar
+                      data={data}
+                      options={options}
+                      plugins={[ChartDataLabels]}
+                    />
                   </div>
                 </div>
               </div>
@@ -397,7 +411,7 @@ const Dashboard = () => {
                           fill="currentFill"
                         />
                       </svg>
-                      <span className="sr-only">Loading...</span>
+                      <span>Đang lấy dữ liệu từ Blockchain, vui lòng chờ!</span>
                     </div>
                   )}
                   {medicalRecordsResult?.chuyen_mon?.chan_doan_xac_dinh ===
