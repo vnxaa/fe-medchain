@@ -16,6 +16,7 @@ const MedicalRecord = () => {
   const [medicalRecords, setMedicalRecords] = useState({});
   const [medicalRecordsResult, setMedicalRecordsResult] = useState({});
   const [loading, setLoading] = useState(false);
+  const [loadingReject, setLoadingReject] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState(null);
   const [showDrawer, setShowDrawer] = useState(false);
@@ -193,7 +194,7 @@ const MedicalRecord = () => {
 
   const createRejectReason = async () => {
     try {
-      setLoading(true);
+      setLoadingReject(true);
       const response = await axios.post(
         `${process.env.service}/api/rejectReason/`,
         {
@@ -202,7 +203,7 @@ const MedicalRecord = () => {
         }
       );
       const createdRejectReason = response.data.rejectReason;
-      console.log("Created reject reason:", createdRejectReason);
+      // console.log("Created reject reason:", createdRejectReason);
       updateMedicalRecordStatus(id, "reject");
       setMedicalRecords((prevState) => ({
         ...prevState,
@@ -215,7 +216,7 @@ const MedicalRecord = () => {
       setSuccess(false);
       setError(error.response.data);
     } finally {
-      setLoading(false);
+      setLoadingReject(false);
     }
   };
   return (
@@ -580,9 +581,11 @@ const MedicalRecord = () => {
                             fill="currentFill"
                           />
                         </svg>
-                        <span className="sr-only">Loading...</span>
+                        <span className="sr-only"></span>
+                        <p>Đang tạo NFT bệnh án, vui lòng chờ!</p>
                       </div>
                     )}
+
                     {medicalRecords?.status === "reject" && (
                       <>
                         <button
@@ -698,7 +701,7 @@ const MedicalRecord = () => {
                   />
                 )}
               </div>
-              {!loading &&
+              {!loadingReject &&
                 !success &&
                 !error &&
                 medicalRecords?.status === "draft" && (
@@ -712,7 +715,7 @@ const MedicalRecord = () => {
                     </button>
                   </>
                 )}
-              {!loading && error && (
+              {!loadingReject && error && (
                 <div>
                   <div
                     className="flex items-center p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400"
@@ -744,7 +747,7 @@ const MedicalRecord = () => {
                   </button>
                 </div>
               )}
-              {!loading && success && (
+              {!loadingReject && success && (
                 <div
                   className="flex items-center p-4 mb-4 text-sm text-green-800 border border-green-300 rounded-lg bg-green-50 dark:bg-gray-800 dark:text-green-400 dark:border-green-800"
                   role="alert"
