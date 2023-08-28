@@ -8,6 +8,8 @@ const AppointmentRequests = () => {
   const [doctors, setDoctors] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [accountsPerPage] = useState(5);
+  const [searchTerm, setSearchTerm] = useState("");
+
   useEffect(() => {
     // Get the token from localStorage
     const token = localStorage.getItem("token");
@@ -56,13 +58,23 @@ const AppointmentRequests = () => {
   // Get current accounts based on pagination
   const indexOfLastAccount = currentPage * accountsPerPage;
   const indexOfFirstAccount = indexOfLastAccount - accountsPerPage;
-  const currentAccounts = doctors.slice(
+
+  // Update current page
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+  const filterRecords = (value) => {
+    setSearchTerm(value);
+  };
+
+  // Filter doctors based on search term
+  const filteredDoctors = doctors.filter((doctor) => {
+    if (doctor?.name != null) {
+      return doctor.name.toLowerCase().includes(searchTerm.toLowerCase());
+    }
+  });
+  const currentAccounts = filteredDoctors.slice(
     indexOfFirstAccount,
     indexOfLastAccount
   );
-  // Update current page
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
-
   return (
     <div>
       <Navigation />

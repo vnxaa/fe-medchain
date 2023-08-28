@@ -9,6 +9,8 @@ const Patient = () => {
   const [patients, setPatients] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [accountsPerPage] = useState(5);
+  const [searchTerm, setSearchTerm] = useState("");
+
   useEffect(() => {
     // Get the token from localStorage
     const token = localStorage.getItem("token");
@@ -62,9 +64,19 @@ const Patient = () => {
   // Get current accounts based on pagination
   const indexOfLast = currentPage * accountsPerPage;
   const indexOfFirst = indexOfLast - accountsPerPage;
-  const currentPatients = patients.slice(indexOfFirst, indexOfLast);
+
   // Update current page
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
+  const filterRecords = (value) => {
+    setSearchTerm(value);
+  };
+  // Filter staff based on search term
+  const filteredPatients = patients.filter((patient) => {
+    if (patient?.name != null) {
+      return patient?.name.toLowerCase().includes(searchTerm.toLowerCase());
+    }
+  });
+  const currentPatients = filteredPatients.slice(indexOfFirst, indexOfLast);
   return (
     <div>
       <Navigation />
